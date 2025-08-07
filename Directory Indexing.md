@@ -14,6 +14,8 @@
 
 * 주로 **Apache, Nginx, 기타 웹 서버**에서
   **디렉토리 인덱싱(browsable directory listing)** 기능이 켜져 있을 때 사용됩니다.
+  <img width="1098" height="521" alt="image" src="https://github.com/user-attachments/assets/03e2ab3b-21ac-4994-a802-b6bf080b8d1c" />
+
 * 예를 들어 `/images/` 같은 디렉토리에 `index.html`이 없고, 디렉토리 목록 보여주도록 설정되어 있으면,
   서버가 이 타입으로 응답할 수 있어요.
 
@@ -49,18 +51,6 @@ Content-Length: 1242
 | Apache | `Options -Indexes` |
 | Nginx  | `autoindex off;`   |
 | IIS    | 디렉토리 검색 비활성화       |
-
----
-
-## 📌 요약
-
-| 항목      | 내용                        |
-| ------- | ------------------------- |
-| MIME 타입 | `application/x-directory` |
-| 의미      | 응답이 디렉토리 목록임을 나타냄         |
-| 표준 여부   | ❌ 비표준 (RFC에 정의 X)         |
-| 보안 우려   | 디렉토리 인덱싱으로 인한 파일/구조 노출 위험 |
-| 대응      | 웹 서버에서 인덱싱 비활성화 권장        |
 
 ---
 
@@ -161,19 +151,5 @@ dirsearch -u http://target.com/
    * `<title>Index of /</title>`
    * `<pre>` 태그로 파일 리스트
    * 파일명, 날짜, 크기 등 표 형식
-
+  
 ---
-
-## 📌 요약
-
-| 항목          | 설명                                                           |
-| ----------- | ------------------------------------------------------------ |
-| 🎯 공격 목적    | 디렉토리 인덱싱을 통해 민감 파일 노출 및 추출                                   |
-| 🧨 주요 공격 예시 | `.env`, `.sql`, `.git`, `config.php~`, `backup.zip` 등 다운로드   |
-| 🔍 탐지 방법    | URL에 `/` 붙여보기, 자동화 스캐너, 응답 헤더(Content-Type), HTML 내용 분석      |
-| 🛡️ 방어법     | 웹서버 설정에서 `autoindex` 비활성화 (Nginx, Apache 등), 민감 파일 서버 업로드 금지 |
-
----
-
-
-필요하시면 Apache, Nginx 등에서 디렉토리 인덱싱을 비활성화하는 방법도 알려드릴게요.
