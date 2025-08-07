@@ -14,7 +14,9 @@
 
 * 주로 **Apache, Nginx, 기타 웹 서버**에서
   **디렉토리 인덱싱(browsable directory listing)** 기능이 켜져 있을 때 사용됩니다.
-  <img width="1098" height="521" alt="image" src="https://github.com/user-attachments/assets/03e2ab3b-21ac-4994-a802-b6bf080b8d1c" />
+<img width="1903" height="121" alt="image" src="https://github.com/user-attachments/assets/01bc3eb1-8648-461e-8fad-8d1f60496072" />
+<img width="1894" height="651" alt="image" src="https://github.com/user-attachments/assets/c53ab060-b5c5-4c9a-913b-bf2bf80cfaa8" />
+
 
 * 예를 들어 `/images/` 같은 디렉토리에 `index.html`이 없고, 디렉토리 목록 보여주도록 설정되어 있으면,
   서버가 이 타입으로 응답할 수 있어요.
