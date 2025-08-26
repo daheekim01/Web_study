@@ -1,6 +1,3 @@
- \*\*"네임서버 + CNAME 레코드"\*\*
-
-
 # 🌐 DNS (Domain Name System) 핵심 개념 정리
 
 > **네임서버(NS) + CNAME 레코드**를 중심으로
@@ -92,7 +89,4 @@ www.example.com.    IN    CNAME    example.com.
 
 ---
 
-
-
-혹시 이 내용 PDF나 이미지로도 원하시나요?
 
