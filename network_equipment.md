@@ -24,8 +24,10 @@ https://www.checkpoint.com/kr/cyber-hub/network-security/what-is-zero-trust/what
 
 ## MTBF (평균 고장 시간)
 
-## UADP(Unified Access Data Plane) ASIC 
+## UADP(Unified Access Data Plane) 
 
+## ASIC 
+ASIC(에이식,Application Specific Integrated Circuit)는 특정 애플리케이션(응용 분야)에 맞춰 설계되고 제작된 집적 회로(반도체 칩)
 
 ## 폼팩터
 
