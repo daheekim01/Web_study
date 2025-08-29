@@ -16,4 +16,26 @@
 
 ## PoE(Power over Ethernet)
 https://ko.itpedia.nl/2022/04/10/power-over-ethernet-poe-vs-poe-vs-poe-levert-geld-op/
+## UPOE(Universal Power over Ethernet)
 
+## 제로 터치 프로비저닝 (ZTP)
+제로 터치 프로비저닝(ZTP)은 새 디바이스의 설정 및 구성을 자동화하여 수동 개입이 필요 없는 기술입니다. 처음 시작할 때 구성 파일을 디바이스에 직접 전달하여 네트워크 디바이스를 일관되고 동시에 자동화된 방식으로 구성할 수 있습니다.
+https://www.checkpoint.com/kr/cyber-hub/network-security/what-is-zero-trust/what-is-zero-touch-provisioning-ztp/
+
+## MTBF (평균 고장 시간)
+
+## UADP(Unified Access Data Plane) ASIC 
+
+
+## 폼팩터
+
+## SFP (Small Form-Factor Pluggable)
+
+## 무선 액세스 포인트(AP)와 에어 모니터(AM)
+
+## 터널링
+
+## WLAN
+
+## 인텐트 기반 네트워킹(IBN: Intent-Based Networking)
+네트워크 사용자의 의도(intent)에 맞는 네트워크 서비스를 효율적으로 제공
