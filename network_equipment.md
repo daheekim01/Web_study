@@ -1,4 +1,4 @@
-# 네트워크 및 IT 용어 정리
+# 네트워크 및 IT 용어 정리 (based on vendor's Datasheets)
 
 ## 기기 및 네트워크 장비
 
