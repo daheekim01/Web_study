@@ -1,8 +1,10 @@
 ## 기기
 - 액세스 포인트
-- SFP 포트 (주로 신호 ​​변환 및 데이터 전송에 사용)
+- SFP (Small Form-Factor Pluggable) 포트 : 주로 신호 ​​변환 및 데이터 전송에 사용
 - 업링크 포트
-
+- Netscaler
+- 슈퍼바이저 엔진
+- 
 - 
 ---
 ## BYOD(Bring Your Own Device)
