@@ -72,7 +72,8 @@ Cisco에서 사용하는 데이터 플레인 아키텍처로, 유무선 통합 �
 
 ### ● 기가비트 이더넷
 
-초당 1Gbps의 속도로 데이터를 전송하는 이더넷 표준.
+초당 1Gbps의 속도로 데이터를 전송하는 이더넷 표준. 
+1 Gbps = 1000 Mbps
 
 ### ● GBIC (Gigabit Interface Converter)
 
@@ -131,3 +132,4 @@ IPv6 멀티캐스트 트래픽을 스위치가 효율적으로 전달하도록 �
 
 * Cisco, Citrix, Dell technology, Netgear, foredge, HP, HPE, Huawei, Ruckus, 엔트로링크, 파이오링크 등 
 
+🔗 [그 외 참고 링크](https://www.cisco.com/c/ko_kr/products/collateral/switches/catalyst-3560-series-switches/product_data_sheet09186a00801f3d7d.html)
