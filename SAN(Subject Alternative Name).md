@@ -1,7 +1,7 @@
 
 **"Can not find test.com neither in domains field nor in subject.common field."**
 
-이 메시지는 **SSL/TLS 인증서 상의 도메인 정보가 실제 접속하려는 도메인과 일치하지 않아서 생기는 보안 문제**를 설명하고 있습니다.
+위 메시지는 **SSL/TLS 인증서 상의 도메인 정보가 실제 접속하려는 도메인과 일치하지 않아서 생기는 보안 문제**를 설명하고 있습니다.
 
 
 🔍 **"Can not find test.com..."**
@@ -155,12 +155,3 @@ openssl s_client -connect test.com:443 -servername test.com
 | 해결책    | 도메인에 맞는 올바른 인증서(SAN 포함)를 발급/적용해야 함 |
 
 ---
-
-필요하시면:
-
-* 인증서 직접 확인하는 방법 (명령어)
-* Let's Encrypt로 SSL 재발급하는 예제
-* SAN 필드 포함된 인증서 발급 스크립트
-
-도 제공해드릴 수 있어요. 원하시나요?
-
