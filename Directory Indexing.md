@@ -4,6 +4,8 @@
 
 ## 🧱 **Apache, Nginx, 기타 웹 서버**에서
   **디렉토리 인덱싱(browsable directory listing)** 기능이 켜져 있을 때 사용됩니다.
+
+  
 <img width="1903" height="121" alt="image" src="https://github.com/user-attachments/assets/01bc3eb1-8648-461e-8fad-8d1f60496072" />
 <img width="1894" height="651" alt="image" src="https://github.com/user-attachments/assets/c53ab060-b5c5-4c9a-913b-bf2bf80cfaa8" />
 
