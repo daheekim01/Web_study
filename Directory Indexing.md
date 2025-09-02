@@ -1,25 +1,14 @@
-`Content-Type: application/x-directory;` 는 HTTP 응답 헤더에서 사용되는 **비표준 MIME 타입**입니다.
-이 타입은 응답 본문이 **"디렉토리 자체" 또는 디렉토리의 목록**이라는 것을 의미합니다.
+`Content-Type: application/x-directory;`는 HTTP 응답 헤더에서 사용되는 **비표준 MIME 타입**으로, 응답 본문이 **"디렉토리 자체" 또는 디렉토리의 목록**이라는 것을 의미합니다.
 
 ---
 
-## ✅ 간단히 말하면:
-
-> `Content-Type: application/x-directory`는
-> **"이 응답은 디렉토리를 나타냅니다"** 라고 클라이언트(브라우저 등)에 알려주는 MIME 타입입니다.
-
----
-
-## 🧱 어디서 사용되나요?
-
-* 주로 **Apache, Nginx, 기타 웹 서버**에서
+## 🧱 **Apache, Nginx, 기타 웹 서버**에서
   **디렉토리 인덱싱(browsable directory listing)** 기능이 켜져 있을 때 사용됩니다.
 <img width="1903" height="121" alt="image" src="https://github.com/user-attachments/assets/01bc3eb1-8648-461e-8fad-8d1f60496072" />
 <img width="1894" height="651" alt="image" src="https://github.com/user-attachments/assets/c53ab060-b5c5-4c9a-913b-bf2bf80cfaa8" />
 
 
-* 예를 들어 `/images/` 같은 디렉토리에 `index.html`이 없고, 디렉토리 목록 보여주도록 설정되어 있으면,
-  서버가 이 타입으로 응답할 수 있어요.
+* 예를 들어 `/images/` 같은 디렉토리에 접근하면 보통 웹서버는 자동으로 index.html 파일을 찾아서 보여주는데, index.html 파일이 없고 Apache나 Nginx 같은 웹 서버에서 디렉토리 목록을 보여주도록 설정을 켜 두었다면 다렉토리 목록이 HTML 형식으로 생성되어 보여질 수도 있음
 
 ---
 
@@ -32,7 +21,7 @@ Content-Length: 1242
 ...
 ```
 
-→ 이 경우, 본문은 HTML 형식의 디렉토리 목록일 수 있음 (`<a href="file.jpg">file.jpg</a>` 식)
+→ 이 경우, 본문은 HTML 형식의 디렉토리 목록일 수 있음 (`<a href="file.jpg">file.jpg</a>`)
 
 ---
 
@@ -44,7 +33,6 @@ Content-Length: 1242
 | 📂 **민감한 파일 노출**   | 잘못된 설정으로 인해 `.env`, `.git`, 백업 파일 등이 노출될 수 있음       |
 | 🐞 **경로 추측 가능**    | 경로 구조가 노출되면, 공격자가 다른 숨겨진 파일을 추측하거나 접근 시도 가능         |
 
----
 
 ## ✅ 서버 측 보안 권장사항
 
@@ -56,14 +44,7 @@ Content-Length: 1242
 
 ---
 
-## 🔥 1. 이걸 노린 공격 예시
-
-### 🎯 목적:
-
-* **디렉토리 목록이 노출되어 있는지 확인하고**,
-* 거기서 **민감한 파일을 다운로드**하거나 **정보를 추출**하는 게 공격의 핵심입니다.
-
----
+## 🔥 공격 예시
 
 ### 📁 \[예시 1] 디렉토리 브라우징 통한 민감 파일 수집
 
@@ -106,7 +87,7 @@ http://target.com/files/?file=../../
 
 ---
 
-## 🔍 2. 서버가 디렉토리 목록을 공개하고 있는지 알아내는 방법
+## 🔍 서버가 디렉토리 목록을 공개하고 있는지 알아내는 방법
 
 ### ✅ 방법 1: 수동 탐지 (브라우저에서 확인)
 
