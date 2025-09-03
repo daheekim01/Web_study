@@ -1,6 +1,4 @@
 # 🌐 DNS (Domain Name System)
-## 네임서버(NS) + CNAME 레코드
-
 ---
 
 ## 1. 네임서버 (NS: Name Server)
