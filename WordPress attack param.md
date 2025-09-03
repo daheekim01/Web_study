@@ -31,4 +31,5 @@
 
 
 
-### wp 외에도 다양한 http 파라미터 사용 (lrm_action, redirect_to, s, lp-ajax 등)
+
+### 👉  wp 외에도 다양한 http 파라미터 사용 (lrm_action, redirect_to, s, lp-ajax 등)
