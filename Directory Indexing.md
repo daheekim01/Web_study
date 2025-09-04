@@ -1,4 +1,4 @@
-`Content-Type: text/html` `Content-Type: application/x-directory;`는 HTTP 응답 헤더에서 사용되는 **비표준 MIME 타입**으로, 응답 본문이 **"디렉토리 자체" 또는 디렉토리의 목록**이라는 것을 의미합니다.
+`Content-Type: text/html;` 또는 `Content-Type: application/x-directory;`는 HTTP 응답 헤더에서 사용되는 **비표준 MIME 타입**으로, 응답 본문이 **"디렉토리 자체" 또는 디렉토리의 목록**이라는 것을 의미합니다.
 
 ---
 
