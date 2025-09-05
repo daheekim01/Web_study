@@ -90,6 +90,28 @@ Content-Security-Policy: default-src 'self'; report-uri /csp-violation-report-en
 Content-Security-Policy: script-src 'self' https://trusted.com; img-src 'self' https://images.example.com;
 ```
 
+#### 6. **`strict-dynamic`**
+
+* \*\*`strict-dynamic`\*\*은 `CSP`에서 스크립트 로드와 관련된 **동적 로딩**을 더욱 엄격하게 제한하는 기능입니다.
+* `strict-dynamic`을 사용하면, **신뢰할 수 있는 스크립트만**이 **동적으로 로드**될 수 있습니다. 즉, **스크립트 태그**나 **동적 로드**가 **서버에서 정의한 신뢰된 소스**에서만 이루어지게 됩니다.
+
+동작 원리
+* `strict-dynamic`을 사용하면, **`script-src`** 지시어에 **출처**(예: `'self'`, `'unsafe-inline'`)를 설정해도, 그 출처에서 **로드된 스크립트만**이 **다시 다른 스크립트를 로드**할 수 있게 됩니다.
+* **예시**로, 서버에서 신뢰된 스크립트를 로드한 후에는, 그 스크립트가 추가적인 스크립트를 로드하는 것이 허용됩니다. 하지만 **그 외의 스크립트**는 전혀 로드되지 않습니다.
+
+예시:
+
+```http
+Content-Security-Policy: script-src 'self' 'strict-dynamic'; object-src 'none';
+```
+
+* `script-src`에서 정의된 **신뢰된 출처**에서만 스크립트가 로드될 수 있습니다.
+* 로드된 스크립트가 추가적인 스크립트를 동적으로 로드할 수 있지만, 그 외의 **외부 스크립트**는 **차단**됩니다.
+* `strict-dynamic`은 \*\*`nonce`\*\*와 결합될 때 가장 효과적입니다. `nonce`를 사용하여 특정 스크립트만 실행하도록 하고, `strict-dynamic`을 사용하여 그 스크립트가 **다른 스크립트를 로드**할 수 있도록 제한합니다.
+
+
+---
+
 ### 적용 예시
 
 #### **HTML 페이지의 헤더에 CSP 설정**
