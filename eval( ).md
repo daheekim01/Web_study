@@ -76,19 +76,96 @@ eval(location.hash.slice(1)); // location.hash에 따라 JS 실행
 > **Attribute Injection**은 **HTML 속성에 코드가 삽입되는 경우**에 해당합니다. 즉, `eval()`이 사용되더라도 위치에 따라 XSS의 **하위 유형**으로 분류될 수 있습니다.
 
 
+---
 
+## ✅`eval()`과 `new Function()`은 JavaScript에서 **동적 코드 실행**을 가능하게 하는 기능입니다. 이 기능을 악용하면 **XSS (Cross-Site Scripting)** 공격을 유발할 수 있습니다. 특히 공격자가 악성 스크립트를 주입하여 사이트의 취약점을 악용하거나 **사용자 데이터를 탈취**할 수 있습니다.
 
-## **✅ `eval()` 사용 사례에 따른 보안 분류**
+### XSS 공격 예시: `eval()`과 `new Function()`을 통한 동적 코드 실행
 
-| 상황                                              | 분류                                 |
-| ----------------------------------------------- | ---------------------------------- |
-| `eval()`이 서버에서 실행 (PHP, Node.js 등)              | 🔥 **RCE** (Remote Code Execution) |
-| `eval()`이 `<script>` 안에서 실행                     | 🧨 **XSS**                         |
-| `eval()`이 `<img onerror="...">`와 같은 HTML 속성에 삽입 | 🚩 **Attribute Injection (XSS)**   |
+#### 1. **`eval()`을 사용한 XSS 공격**
 
+`eval()`은 문자열을 코드로 실행할 수 있는 기능을 제공합니다. 만약 `eval()`이 사용자 입력을 처리하는 코드에 포함되어 있다면, 악의적인 사용자가 해당 입력을 **JavaScript 코드**로 실행시킬 수 있습니다.
 
+##### 예시:
 
+만약 웹 애플리케이션이 URL 쿼리 매개변수 또는 사용자 입력을 `eval()`로 처리한다고 가정할 때, 공격자는 다음과 같은 **악성 페이로드**를 삽입할 수 있습니다.
 
+```javascript
+// 사용자 입력을 eval()로 실행하는 코드
+var userInput = "alert('XSS Attack!');";  // 실제 공격자가 입력한 값
+eval(userInput);
+```
+
+**악의적인 입력**:
+
+```plaintext
+javascript:alert('XSS'); // URL에서 사용될 수 있음
+```
+
+위와 같은 입력이 실행되면 **알림창**(`alert`)이 나타나는데, 이는 공격자가 **자바스크립트 코드**를 실행하게 만든 것입니다.
+
+#### 2. **`new Function()`을 사용한 XSS 공격**
+
+`new Function()`은 동적으로 **JavaScript 함수를 생성**하고, 이를 **실행**하는 방식입니다. 이 또한 **동적 코드 실행**을 가능하게 하여 XSS 공격에 취약할 수 있습니다.
+
+##### 예시:
+
+```javascript
+// 사용자 입력을 new Function()으로 실행하는 코드
+var userInput = "alert('XSS Attack!');";  // 실제 공격자가 입력한 값
+var maliciousFunc = new Function(userInput);
+maliciousFunc();
+```
+
+**악의적인 입력**:
+
+```plaintext
+alert('XSS');  // 사용자 입력값으로 주입되는 악성 스크립트
+```
+
+#### 3. **URL을 통한 XSS 공격**
+
+`eval()`이나 `new Function()`을 사용하는 웹 애플리케이션에서, **URL의 쿼리 파라미터**를 통해 악성 JavaScript 코드를 주입할 수 있습니다.
+
+##### 예시:
+
+웹 애플리케이션에서 `eval()`을 사용하여 URL의 쿼리 매개변수 값을 처리하는 코드가 있을 수 있습니다.
+
+```javascript
+var userInput = getParameterByName('input');  // URL에서 쿼리 파라미터 가져오기
+eval(userInput);
+```
+
+* URL 쿼리 파라미터 `input`에 **악성 스크립트**가 포함되면, 이를 \*\*eval()\*\*을 통해 실행시킬 수 있습니다.
+
+**악의적인 URL 예시**:
+
+```plaintext
+https://example.com/?input=alert('XSS');
+```
+
+위 URL에 접속하면 `eval()`이 `"alert('XSS')"`를 실행하여 **알림창**을 띄우는 결과가 발생합니다.
+
+#### 4. **`document.location`을 통한 XSS**
+
+만약 `eval()`이나 `new Function()`을 사용하여 **URL을 동적으로 처리**하고 있다면, 공격자는 `document.location`을 악용하여 자신이 원하는 JavaScript를 실행시킬 수 있습니다.
+
+##### 예시:
+
+```javascript
+var userInput = document.location.hash.substring(1);  // URL 해시(#)에서 값 추출
+eval(userInput);  // 동적으로 JavaScript 실행
+```
+
+**악의적인 URL 예시**:
+
+```plaintext
+https://example.com/#alert('XSS');
+```
+
+위 URL을 통해 `#alert('XSS')`가 실행되며, **XSS 공격**이 발생합니다.
+
+---
 
 ## **📌 예시 코드 1: base64 디코딩 후 `eval()` 실행**
 
