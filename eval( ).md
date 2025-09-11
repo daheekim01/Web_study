@@ -78,9 +78,9 @@ eval(location.hash.slice(1)); // location.hash에 따라 JS 실행
 
 ---
 
-### ✅`eval()`과 `new Function()`은 JavaScript에서 **동적 코드 실행**을 가능하게 하는 기능입니다. 이 기능을 악용하면 **XSS (Cross-Site Scripting)** 공격을 유발할 수 있습니다. 특히 공격자가 악성 스크립트를 주입하여 사이트의 취약점을 악용하거나 **사용자 데이터를 탈취**할 수 있습니다.
+### ✅`eval()`과 `new Function()`을 통한 동적 코드 실행 (XSS)
 
-#### XSS 공격 예시: `eval()`과 `new Function()`을 통한 동적 코드 실행
+`eval()`과 `new Function()`은 JavaScript에서 **동적 코드 실행**을 가능하게 하는 기능입니다.
 
 #### 1. **`eval()`을 사용한 XSS 공격**
 
