@@ -28,3 +28,58 @@
 5. **file** – 로컬 파일 시스템에서 파일을 접근할 때 사용하는 스킴 (예: `file:///C:/path/to/file`)
 
 URI 스킴을 통해 리소스를 어떻게 접근할 수 있는지, 어떤 프로토콜이나 규칙을 사용해야 하는지 알려주기 때문에 웹에서 자원과의 상호작용에 중요한 역할을 합니다.
+
+---
+
+## 💻 예제 1: `data:` URL을 이용한 XSS (iframe + script)
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Data URL XSS Example</title>
+</head>
+<body>
+  <h1>Data URL을 이용한 XSS 데모</h1>
+
+  <!-- iframe으로 data URL을 삽입 -->
+  <iframe src="data:text/html,
+    <script>alert('XSS! Data URL을 통해 실행됨');</script>"
+    width="0" height="0" style="display:none;">
+  </iframe>
+
+</body>
+</html>
+```
+
+### 🔍 설명:
+
+* `iframe` 태그의 `src` 속성에 `data:text/html,<script>...</script>` 형태의 **스크립트가 포함된 HTML**을 넣었습니다.
+* 브라우저는 이걸 **새 HTML 페이지처럼 인식**하고 렌더링하며, `<script>`가 실행됩니다.
+* 즉, 이 방식으로 **스크립트를 외부 로드 없이 inline으로 실행**할 수 있습니다.
+
+---
+
+## 💻 예제 2: `data:` URL을 `<img>`에 쓰는 경우 (피싱이나 Clickjacking 등에 사용 가능)
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <h2>Data URL 이미지 삽입</h2>
+  <img src="data:image/svg+xml,
+    <svg xmlns='http://www.w3.org/2000/svg' width='300' height='100'>
+      <a href='javascript:alert(`Clicked!`)'>
+        <text x='10' y='50' font-size='30'>Click Me</text>
+      </a>
+    </svg>">
+</body>
+</html>
+```
+
+### 🔍 설명:
+
+* SVG 안에 `<a href="javascript:...">`를 넣으면, 클릭 시 자바스크립트가 실행됩니다.
+* **보안에 취약한 브라우저나 환경**에서는 이렇게 악성 스크립트가 실행될 수 있습니다.
+* 이미지처럼 보이지만, 실제로는 **인터랙티브한 스크립트 실행 트리거**로 작동할 수 있습니다.
+
