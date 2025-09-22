@@ -1,4 +1,4 @@
-## ☪️ new Function(), setTimeout(), setInterval().md
+## ☪️ 동적 코드 실행 함수 Dynamic Code Execution Functions [new Function(), setTimeout(), setInterval(), document.write()]
 
 ### **1. `new Function()`을 통한 코드 인젝션 공격**
 
