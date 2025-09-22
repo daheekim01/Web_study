@@ -97,7 +97,7 @@
 
 ---
 
-### **4. document.write()`을 통한 DOM 공격**
+### **4. `document.write()`을 통한 DOM 공격**
 
 #### **개념**:
 
