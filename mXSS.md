@@ -1,16 +1,5 @@
 ## 🩻 mXSS (The Vulnerability Hiding in Your Code)
 
-
-## ✅ mXSS란 무엇인가요?
-
-### 💥 XSS(크로스사이트 스크립팅) 기본 개념
-
-* 공격자가 웹사이트에 **악성 JavaScript 코드를 삽입**하고
-* 피해자가 해당 페이지를 방문하면 코드가 실행되어
-* \*\*계정 탈취, 데이터 유출, 심지어 RCE(원격 코드 실행)\*\*까지 가능
-
-### 🧬 mXSS란?
-
 \*\*mXSS(Mutation XSS)\*\*는 HTML이 **브라우저에서 자동으로 "수정(mutate)"되는 방식**을 악용해서
 **필터링(Sanitizer)을 우회**하는 XSS 공격입니다.
 
