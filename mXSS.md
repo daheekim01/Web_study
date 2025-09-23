@@ -1,10 +1,15 @@
 ## 🩻 mXSS (The Vulnerability Hiding in Your Code)
+🔗 [https://research.securitum.com/dompurify-bypass-using-mxss/]
+
 
 \*\*mXSS(Mutation XSS)\*\*는 HTML이 **브라우저에서 자동으로 "수정(mutate)"되는 방식**을 악용해서
 **필터링(Sanitizer)을 우회**하는 XSS 공격입니다.
 
 * 기존의 DOMPurify, bleach 등 필터링 시스템도 우회 가능
 * 구글 검색, 이메일 서비스 등에서도 발견된 적 있음
+
+#### ⛔️ 주의: 서버 측 렌더링에서는 성공하지 않음
+mXSS는 클라이언트 렌더링(특히 innerHTML) 에 의존하므로, 서버가 sanitize 후 렌더링까지 하고 나오는 구조 (SSR)는 대상이 아닙니다.
 
 ---
 
