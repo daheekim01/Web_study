@@ -1,9 +1,5 @@
 # 🚀 PHP Filter Chain 
 
-🔗 {[https://www.dottak.me/1964af8a-50ca-800b-9c3f-da340bfa9b5d]}
-🔗 {[https://www.dottak.me/1964af8a-50ca-800b-9c3f-da340bfa9b5d](https://y0un.tistory.com/62)}
-
-
 💡 **PHP Filter Chain**은 PHP의 *Wrapper*와 *Conversion Filter* 기능을 연속으로 사용해서
 서버 내에서 원하는 임의의 문자열, 코드 조각을 만들어내는 공격 기법.
 
@@ -125,6 +121,9 @@ convert.base64-decode/resource=php://temp
 ---
 
 ### 참고 자료 📚
+
+🔗 {[https://www.dottak.me/1964af8a-50ca-800b-9c3f-da340bfa9b5d]}
+🔗 {[https://www.dottak.me/1964af8a-50ca-800b-9c3f-da340bfa9b5d](https://y0un.tistory.com/62)}
 
 * [PHP Wrappers 공식문서](https://www.php.net/manual/en/wrappers.php)
 * [PHP Filters 공식문서](https://www.php.net/manual/en/filters.convert.php)
