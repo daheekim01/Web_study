@@ -309,7 +309,7 @@ echo error303;
 > 결론: GET으로 전송된 파라미터만으로 `file_put_contents` 호출이 가능하다면 즉시 RCE/웹셸 설치 성공 위험.
 
 
-# 실제 공격 흐름
+### 실제 공격 흐름
 
 1. 공격자가 `https://community.com/index.php?s=/Index/.../invokefunction`에 쿼리 파라미터로 `function=call_user_func_array` 와 `vars[...]` 를 보냄.
 2. 취약한 서버 코드가 `function`/`vars`를 검증 없이 사용하여 `call_user_func_array`를 호출.
