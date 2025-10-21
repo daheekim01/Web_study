@@ -387,12 +387,94 @@ SecRule ARGS|REQUEST_BODY "@rx (?i)DBMS_PIPE\.RECEIVE_MESSAGE" "id:100200,phase:
 ## 8) 요약
 
 * 제공하신 문자열은 **Oracle 대상의 SQL Injection(시간 기반/블라인드 혹은 OOB) 시도**입니다.
-* **command injection이 아니다.** 다만 성공 시 데이터 유출·추가 권한 상승으로 이어질 수 있어 즉시 조사·차단·패치가 필요합니다.
 
-원하시면:
+---
 
-* 귀하의 액세스 로그 일부(민감 정보 마스킹 후)를 붙여주시면 — 해당 요청의 성공 가능성(응답 지연·반복성 등)을 같이 분석해 드리겠습니다.
-* 또는 현재 서비스 코드(취약 파라미터를 처리하는 부분)를 붙여주시면 안전하게 파라미터화/리팩터링 하는 예시 코드를 바로 만들어 드립니다. 어느 쪽 도와드릴까요?
+좋습니다 — 각 페이로드(문자열)를 **공격 관점(의도) · 취약 유형(분류) · 위험도 · 방어/탐지 포인트** 관점으로 하나씩 분석해 드릴게요. 악용 방법(실제 공격 절차, 재현 명령 등)은 제공하지 않고, 방어·탐지·증거확인에 집중한 설명입니다.
 
+---
+
+### 1)
+
+`https://CC.com/index/ajax/lang?lang\=..//..//application/database`
+**의도 · 분류**: 디렉터리 트래버설 / LFI(로컬 파일 포함) 시도. `..//..//application/database` 형태로 상위 디렉터리로 올라가서 내부 파일(예: `application/database`)에 접근하려는 시도.
+**위험도**: 중〜높음 (대상 파일이 소스/설정/암호 등 민감 정보를 포함하면 심각).
+**탐지 포인트**: 접근 로그에서 `..` 또는 `%2e%2e` 같은 인코딩, 연속된 슬래시, `lang=` 파라미터 값에 비정상 경로.
+**대응**: 입력값 정규화(화이트리스트), 경로 정규화 후 접근 허용, 파일시스템 권한 최소화, WAF 룰 추가.
+
+---
+
+### 2)
+
+`SCANTL\=7,WEBATCK\=10,WEBATCK\=10,/seeyon/autoinstall.do/..;/ajax.do`
+**의도 · 분류**: 경로 조작/트래버설 시도로 보이는 로그형 문자열(스캐너 또는 공격 툴 헤더 표기 포함). `seeyon`은 A6/Seeyon 그룹웨어 관련 URI로 알려져 있으며, 과거 취약점 공격 대상이었던 경우가 있음. `..;` 와 같은 구문은 트릭(세미콜론 포함 경로, 경로 재조합) 시도.
+**위험도**: 중간 — 타깃 시스템의 특정 취약(Seeyon 관련 취약점 또는 서블릿 경로 처리 문제)이 존재하면 심각.
+**탐지 포인트**: 접근 로그에서 `seeyon` 관련 비정상 경로, 세미콜론(`;`) 포함 경로, 반복적인 `SCANTL`/`WEBATCK` 같은 스캐너 마커.
+**대응**: 관련 패치(Seeyon 포함 서드파티 SW), 접근제어, WAF 서명 추가.
+
+---
+
+### 3)
+
+`SCANTL\=7,WEBATCK\=10,WEBATCK\=10,/seeyon/thirdpartyController.do/..;/ajax.do`
+(위와 동일한 유형 — `seeyon` 대상의 트래버설/탐색 시도)
+**의도/위험/대응**: 2)와 동일하게 보시면 됩니다.
+
+---
+
+### 4)
+
+`index/ hinkModule/Action/Param/${@phpinfo()},{@phpinfo(`
+**의도 · 분류**: 템플릿/표현식 삽입 또는 PHP 코드 인젝션 시도(템플릿 인젝션/서버 사이드 템플릿에서 PHP 함수 호출을 시도). `${...}` 형태는 템플릿 표현식(또는 일부 프레임워크에서 eval 가능한 표현식)으로 해석되어 `phpinfo()`를 실행하려는 목적.
+**위험도**: 높음(실제로 코드가 실행되면 정보 누출 → RCE로 이어질 수 있음).
+**탐지 포인트**: 요청 경로/파라미터에 `${`, `@phpinfo`, `phpinfo(` 같은 패턴, 응답에 PHP 환경 정보(phpinfo 출력) 포함 여부.
+**대응**: 입력 이스케이프/템플릿 사용법 검토, 템플릿 엔진의 표현식 허용 범위 제한, 민감 정보 출력 차단.
+
+---
+
+### 5)
+
+`index/ hinkmodule/action/param1/${@phpinfo()},{@phpinfo(`
+(4)와 동일한 시도 — 파라미터명이 다름)
+**의도/위험/대응**: 4)와 동일.
+
+---
+
+### 6)
+
+`SCANTL\=7,WEBATCK\=10,WEBATCK\=10,/seeyon/genericController.do/..;/ajax.do`
+(2,3과 동일 계열 — seeyon 관련 트래버설/스캐닝)
+**의도/위험/대응**: 위와 동일.
+
+---
+
+### 7)
+
+`php://filter`
+**의도 · 분류**: PHP 스트림 래퍼를 이용한 소스 코드 노출 시도(php://filter/convert.base64-encode/resource=패스 등으로 LFI와 결합하면 소스코드 읽기).
+**위험도**: 중〜높음(파일을 읽어 소스·설정·비밀번호를 노출할 수 있음).
+**탐지 포인트**: 요청 파라미터/경로에 `php://` 또는 `php%3A%2F%2F` 같은 인코딩된 형태 등장. 응답에 base64 텍스트가 나타날 수 있음.
+**대응**: 파일 포함에 쓰이는 입력값을 엄격히 제한, php 스트림 래퍼 사용 차단(필요시), 파일 권한 제한.
+
+---
+
+### 8)
+
+긴 OGNL/Struts 스타일 페이로드들 (두 가지 변형 포함) — 예:
+
+```
+method:#_memberAccess\=@ognl.OgnlContext@DEFAULT_MEMBER_ACCESS,
+#req\=@org.apache.struts2.ServletActionContext@getRequest(),
+#res\=@org.apache.struts2.ServletActionContext@getResponse(),
+#res.setCharacterEncoding(#parameters.encoding[0]),
+#w\=#res.getWriter(),
+#path\=#req.getRealPath(#parameters.pp[0]),
+new java.,method:#_memberaccess\=@ognl.ognlcontext@default_member_access,...
+newjava.io.bufferedwriter(newjava.io.filewriter(#path#parameters.filename[0]).append(#parameters.content[0])).close(),#w.print(#parameters.info1[0]),...
+```
+
+**의도 · 분류**: **Apache Struts(OGNL) 인젝션을 통한 원격명령/코드 실행(RCE)** 시도. `_memberAccess`를 우회하여 `ServletActionContext`를 통해 요청/응답/파일시스템에 접근, `java.io.FileWriter` 등을 사용해 서버에 파일을 쓰거나 임의 코드 실행을 시도하는 전형적 Struts OGNL 페이로드.
+**위험도**: 매우 높음 — 역사적으로 치명적(원격 코드 실행) 취약점에서 동일 기법이 사용됨(예: Struts2 OGNL 취약점 사례).
+**탐지 포인트**: 요청에 `#_memberAccess`, `ServletActionContext`, `ognl`, `getWriter()`, `getRealPath`, `java.io` 같은 문자열이 포함. 응답/서버에 새 파일(웹셸 등) 생성 여부, 에러로그(Java 예외) 확인.
 
 
