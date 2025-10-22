@@ -128,15 +128,8 @@ SecRule REQUEST_BODY "@rx copy\s*\(\s*https?://[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0
 
 ---
 
-원하시면 지금 이 페이로드와 이전에 올려주신 ThinkPHP/ASP 페이로드들을 합쳐서 한 번에 탐지할 수 있는 **정규식 규칙 모음(정밀)** 또는 **탐지 스크립트(쉘 스크립트)** 를 바로 만들어 드리겠습니다. 어느 쪽으로 드릴까요?
+# 예시 3 SQL Injection(시간 기반 블라인드 SQLi) 시도**가 맞습니다. 아래에 하나하나 풀어 설명하고, 탐지·대응·완화 방안까지 실전용으로 정리합니다. (안전상: 절대 이 페이로드를 실제 DB에 `eval`·`exec` 하지 마세요.)
 
-
-
----
-
-네 — **이건 SQL Injection(시간 기반 블라인드 SQLi) 시도**가 맞습니다. 아래에 하나하나 풀어 설명하고, 탐지·대응·완화 방안까지 실전용으로 정리합니다. (안전상: 절대 이 페이로드를 실제 DB에 `eval`·`exec` 하지 마세요.)
-
----
 
 # 1) 페이로드(디코딩)
 
@@ -278,11 +271,8 @@ grep "AND 8246" /var/log/nginx/access.log* -n
 ---
 
 
+# 예시 4 **Oracle을 노린 SQL Injection(시간/블라인드·OOB 기법)** 페이로드입니다. 자세히 풀어드릴게요.
 
-짧게 결론부터: **아니요 — 이건 `command injection`이 아닙니다.**
-이건 **Oracle을 노린 SQL Injection(시간/블라인드·OOB 기법)** 페이로드입니다. 자세히 풀어드릴게요.
-
----
 
 ## 1) 원문(디코딩해서 보기)
 
@@ -348,51 +338,9 @@ grep -R --line-number "language" /var/www 2>/dev/null
 grep -R --line-number -E "\$_(GET|POST|REQUEST).*language" /var/www 2>/dev/null
 ```
 
----
-
-## 6) 대응·완화(우선순위)
-
-1. **즉시 차단**: 공격을 시도한 IP를 방화벽/WAF에서 차단(로그 보존).
-2. **Prepared Statements / Parameterized Queries** 사용: 쿼리와 데이터를 분리해 SQL 삽입 불가능하게 만드세요.
-3. **입력 화이트리스트**: `language` 같은 파라미터는 허용되는 값 목록으로만 통과시키세요 (`en`, `ko` 등).
-4. **DB 권한 최소화**: 애플리케이션 DB 계정에 불필요한 권한(특히 실행 권한 있는 DBA급 권한, 패키지 실행 권한 등)을 주지 마세요.
-5. **DB 함수 권한 제한**: 가능하면 `DBMS_PIPE` 같은 패키지에 대한 애플리케이션 계정의 `EXECUTE` 권한을 제거하세요(비즈니스 필요 없으면).
-6. **쿼리 타임아웃 설정**: DB/애플리케이션 레벨에서 쿼리 실행 시간 제한을 설정(예: statement timeout).
-7. **WAF 룰 추가**: `DBMS_PIPE.RECEIVE_MESSAGE`, `CHR(number)||CHR(number)` 같은 Oracle 특유 패턴 탐지 차단.
-
-예시 ModSecurity 룰(간단):
-
-```
-SecRule ARGS|REQUEST_BODY "@rx (?i)DBMS_PIPE\.RECEIVE_MESSAGE" "id:100200,phase:2,deny,log,msg:'Oracle time-based SQLi attempt'"
-```
 
 ---
 
-## 7) 탐지 룰 / 정규식 예시
-
-* `DBMS_PIPE` 탐지:
-
-```
-(?i)DBMS_PIPE\s*\.\s*RECEIVE_MESSAGE
-```
-
-* `CHR(...)||CHR(...)` 연결형 난독화 탐지:
-
-```
-(?i)CHR\(\d+\)(\s*\|\|\s*CHR\(\d+\))+
-```
-
----
-
-## 8) 요약
-
-* 제공하신 문자열은 **Oracle 대상의 SQL Injection(시간 기반/블라인드 혹은 OOB) 시도**입니다.
-
----
-
-좋습니다 — 각 페이로드(문자열)를 **공격 관점(의도) · 취약 유형(분류) · 위험도 · 방어/탐지 포인트** 관점으로 하나씩 분석해 드릴게요. 악용 방법(실제 공격 절차, 재현 명령 등)은 제공하지 않고, 방어·탐지·증거확인에 집중한 설명입니다.
-
----
 
 ### 1)
 
@@ -476,5 +424,88 @@ newjava.io.bufferedwriter(newjava.io.filewriter(#path#parameters.filename[0]).ap
 **의도 · 분류**: **Apache Struts(OGNL) 인젝션을 통한 원격명령/코드 실행(RCE)** 시도. `_memberAccess`를 우회하여 `ServletActionContext`를 통해 요청/응답/파일시스템에 접근, `java.io.FileWriter` 등을 사용해 서버에 파일을 쓰거나 임의 코드 실행을 시도하는 전형적 Struts OGNL 페이로드.
 **위험도**: 매우 높음 — 역사적으로 치명적(원격 코드 실행) 취약점에서 동일 기법이 사용됨(예: Struts2 OGNL 취약점 사례).
 **탐지 포인트**: 요청에 `#_memberAccess`, `ServletActionContext`, `ognl`, `getWriter()`, `getRealPath`, `java.io` 같은 문자열이 포함. 응답/서버에 새 파일(웹셸 등) 생성 여부, 에러로그(Java 예외) 확인.
+
+
+---
+
+# 예시 File upload / PHP code injection
+
+**multipart/form-data 파일 업로드 요청의 전형적 형태**로, 목적은 `shell.php` 라는 PHP 파일을 서버에 업로드해 웹에서 실행(토큰 출력)되는지 확인하는 **웹셸 업로드 / PHP 코드 인젝션 시도**입니다. 아래에 구조·의도·성공 조건·탐지·대응을 한눈에 보기 좋게 정리합니다.
+
+
+# 1) 원본(정리된 형태)
+
+```http
+<?php echo '33zVO2dZwGOAq7rZWY7nQom2DTd'; ?>
+--WebKitFormBoundary33zVNxq4FnkZLQbsq1DkPmwAkDC
+Content-Disposition: form-data; name="file"; filename="shell.php"
+Content-Type: application/x-php
+```
+
+
+# 2) 무엇을 의미하나 (구조 설명)
+
+* `--WebKitFormBoundary...` 
+  : multipart 바운더리(브라우저가 만든 구분자). 요청 바디에서 각 파트의 시작/끝을 구분.
+* `Content-Disposition: form-data; name="file"; filename="shell.php"`
+  : 업로드 필드 이름(file), 업로드될 파일명(shell.php)
+* `Content-Type: application/x-php`
+  : 업로드 파일의 MIME 타입(여기서는 PHP).
+* 파일 본문 `<?php echo '33z...'; ?>`
+  : 서버가 이 내용을 그대로 저장하고 .php로 실행하면, 브라우저에 토큰 문자열을 출력함(POC: 업로드/실행 성공 증거)
+* 마지막 바운더리 `--...--` 는 multipart의 끝을 나타냄.
+  
+의도: 파일 업로드 핸들러를 통해 shell.php라는 PHP 파일을 서버에 쓰게 하고, 그 파일을 웹에서 호출해 PHP가 실행되는지(서버가 코드를 해석하는지)를 확인하려는 POC(증거 출력)입니다. 성공 시 추가 악성행위(명령 실행, 백도어 등)를 감행할 수 있습니다.
+
+
+# 5) 성공하려면 필요한 조건
+
+1. **엔드포인트가 multipart/form-data를 받고 파일을 처리(저장)해야 함.** (`admin-ajax.php` 자체는 기본 워드프레스 AJAX 핸들러이며, 플러그인이 업로드를 구현한 경우가 있어야 함.)
+2. **업로드 핸들러가 파일명/확장자/내용 검증을 하지 않거나 우회 가능해야 함.** (예: 확장자 검사 우회, MIME 검사 미비)
+3. **파일이 웹에서 접근 가능한 디렉터리(예: `/wp-content/uploads/` 등)에 `.php` 확장자로 저장되어 웹서버가 PHP를 실행할 수 있어야 함.**
+4. **웹서버 파일권한/설정이 PHP 실행을 허용해야 함** (예: 업로드 폴더에서 PHP 실행이 차단되어 있지 않아야 함).
+5. **저장된 파일을 액세스한 기록(또는 해당 토큰이 응답에 포함)** 이 있어야 실제 성공 판별 가능.
+
+---
+
+# 6) 탐지(증거 수집) — 안전한 방법(권장 명령)
+
+(서버에서 루트/웹 루트 접근 가능한 상황 가정 — 안전·읽기 전용 명령들)
+
+* 웹서버 접근 로그에서 해당 바운더리나 토큰 찾기:
+
+```bash
+# 액세스/에러 로그에서 토큰(응답에서 나올 수 있는 문자열) 검색
+grep -R "33zVO2dZwGOAq7rZWY7nQom2DTd" /var/log/nginx* /var/log/apache2* || true
+
+# POST 바디/바운더리 문자열 검색 (로그에 바디가 남는 경우에만 유효)
+grep -R "WebKitFormBoundary33zVNxq4FnkZLQbsq1DkPmwAkDC" /var/log/nginx* /var/log/apache2* || true
+```
+
+* 업로드 디렉터리에서 최근 `.php` 파일 찾기:
+
+```bash
+# 워드프레스 업로드 폴더 예시
+find /var/www/html/wp-content/uploads -type f -iname "*.php" -mtime -30 -ls
+# 토큰 포함 여부 검사
+grep -R "33zVO2dZwGOAq7rZWY7nQom2DTd" /var/www/html/wp-content/uploads || true
+```
+
+* 웹 루트 전체에서 토큰 포함 파일 검색:
+
+```bash
+grep -R --line-number "33zVO2dZwGOAq7rZWY7nQom2DTd" /var/www/html || true
+```
+
+* 접근 로그에서 파일에 대한 GET 요청(업로드 이후 실행 시도) 검색:
+
+```bash
+grep -R "GET .*shell.php" /var/log/nginx* /var/log/apache2* || true
+# 또는 토큰이 포함된 응답을 확인한 IP 확인
+```
+
+> 주의: **직접 웹셸을 실행(HTTP GET으로 호출)을 재현하지 말 것.** 증거 수집은 읽기·검색으로만 수행하세요.
+
+---
 
 
