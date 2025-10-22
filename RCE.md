@@ -12,14 +12,14 @@
 * 의도: 내부에서 `call_user_func_array('md5', ['HelloThinkPHP'])` 실행 유도 → 응답으로 MD5가 나오면 호출 성공.
 
 
-## 완전한 RCE가 되려면 (필수 조건)
+### 완전한 RCE가 되려면 (필수 조건)
 
 1. 공격자가 `vars[0]` 등으로 `system`, `exec`, `shell_exec`, `eval` 등을 지정할 수 있어야 함
 2. 서버/프레임워크가 **함수명 검증(화이트리스트)** 또는 **disable_functions** 같은 보호를 하지 않을 것
 3. 함수 실행 결과가 외부로 노출되거나 파일 쓰기/명령 실행이 가능할 것
 
 
-## 불완전(실패) 조건 예시
+### 불완전(실패) 조건 예시
 
 * `invokefunction` 접근에 인증/권한 필요
 * 함수 호출 시 화이트리스트 적용
@@ -28,7 +28,7 @@
 * 호출 결과가 외부에 노출되지 않음
 
 
-## 즉시 탐지/확인
+### 즉시 탐지/확인
 
 * 요청 패턴 로그 검색
 
@@ -51,7 +51,7 @@
   php -r "echo ini_get('open_basedir').PHP_EOL;"
   ```
 
-## 예방법
+### 예방법
 
 1. WAF/방화벽에서 아래 패턴 차단:
    * `think\Container/invokefunction`
@@ -101,7 +101,7 @@ Host: victim.com
 * URL은 반드시 올바르게 URL-인코딩 (예: `-d+auto_prepend_file=php://input` → `-d%20auto_prepend_file%3Dphp%3A%2F%2Finput`)
 
 
-## 즉시 탐지/확인
+### 즉시 탐지/확인
 
 * 액세스 로그에 `php-cgi` 또는 `php-cgi.exe` 호출이 있는지:
 
