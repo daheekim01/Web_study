@@ -192,5 +192,63 @@ Content-Type: text/plain
 
 ---
 
+## 📎 예제 3. PHP 코드의 proc_open을 이용한 시스템 명령 RCE
 
+서버에서 명령을 실행(proc_open)하고 결과를 HTTP로 돌려주는 전형적인 원격 명령 실행(RCE) / 웹쉘 설치 시도
+proc_open 페이로드(원격 명령 실행 시도)와 eval_stdin.php가 함께 발견되면 공격자는 서버에서 원격으로 코드를 보내 eval()로 실행시키는 체계를 구축
+ * eval_stdin.php 이름으로 짐작되는 파일은 보통 php://stdin 또는 요청 바디를 eval()로 실행하도록 만든 웹쉘/원격 코드 실행 러너입니다.
+
+```php
+<?php
+$sp2b9876 = proc_open(
+    'uname -a',
+    array(
+        0 => array('pipe', 'r'),
+        1 => array('pipe', 'w'),
+        2 => array('pipe', 'r')
+    ),
+    $sp71a4e7
+);
+echo stream_get_contents($sp71a4e7[1]);
+?>
+```
+
+* `<?php ... ?>`
+  PHP 코드 블록 — 웹서버가 이 파일을 해석하면 코드가 실행됩니다.
+
+* 변수명 (`$sp2b9876`, `$sp71a4e7`)
+  무작위화된 변수명(난독화 시도). 공격자는 흔히 랜덤 이름을 써서 탐지를 피하려 합니다.
+
+* `proc_open(command, descriptorspec, &pipes)`
+
+  * **기능**: 새로운 프로세스를 생성하고 표준 입출력 스트림(stdin/stdout/stderr)을 파이프에 연결합니다.
+  * `command`: 여기서는 `'uname -a'` — 리눅스/유닉스 시스템 정보를 출력하는 명령. 공격자는 보통 권한·환경 확인용으로 이런 명령부터 실행합니다.
+  * `descriptorspec`: 0(stdin), 1(stdout), 2(stderr)에 대한 설정. `array('pipe', 'r')` 은 읽기/쓰기 파이프 연결을 뜻합니다.
+  * `$sp71a4e7`(참조로 전달): 생성된 파이프(리소스 핸들)들이 이 변수에 채워집니다. 예: `$sp71a4e7[0]` = 쓰기용(프로세스 stdin), `[1]` = 읽기용(stdout), `[2]` = 읽기용(stderr).
+
+* `stream_get_contents($sp71a4e7[1])`
+
+  * `$sp71a4e7[1]`(stdout 파이프)에서 출력된 모든 내용을 읽습니다. 결국 `uname -a`의 출력(커널 명/버전 등)을 읽어 `echo`로 응답에 쏩니다.
+
+* `echo`
+
+  * 실행 결과를 HTTP 응답 본문으로 출력 — 공격자는 이렇게 서버에서 명령을 실행하고 결과를 원격으로 확인합니다.
+
+### 전개 패턴
+
+  1. 서버의 OS·커널·환경 확인 (`uname -a`) — 권한 상승, 취약점 선택에 참고.
+  2. 원격 명령 실행(RCE) 검증: 단일 명령을 실행해 응답을 확인하면 접근 가능 여부 확인.
+  3. 이어서 파일 업로드, 추가 바이너리 다운로드, 웹쉘 설치, 내부 네트워크 스캔 등으로 확장될 가능성 큼.
+
+* **주입 경로(흔한 수단)**
+
+  * 파일 업로드 취약점(확장자/확장자 검증 실패)
+  * LFI(Local File Inclusion) 취약점을 통한 로그/업로드 파일 포함
+  * 취약한 플러그인/테마(특히 워드프레스)
+  * 미스컨피규어된 eval/인클루드 사용 코드
+
+### 🛹 변형/유사 페이로드 (공격자들이 자주 쓰는 다른 함수들)
+
+* `system('command')`, `exec('command', $out)`, `shell_exec('command')`, `` `command` `` (백틱), `popen()`, `passthru()`
+* `proc_open`은 더 정교한 I/O 제어가 가능해서 선호되기도 함.
 
