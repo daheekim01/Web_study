@@ -160,9 +160,9 @@ Host: victim.com
   find /var/www -type f -iname "*.php" -mtime -7 -ls
   ```
 
+---
 
-
-## 📎 예제 2-1. php-cgi(또는 php-cgi.exe) 취약점/오용을 이용한 원격코드실행(RCE)
+## 📎 예제 2-1. php-cgi RCE (`php-cgi` Query String `-d` 인젝션 취약점)
 
 공격자가 웹 서버에 **악성 PHP 코드**를 삽입하고 실행
 
@@ -204,6 +204,7 @@ Content-Type: text/plain
 ### 🔥 전형적인 PHP CGI 취약점 공격
 
 이건 **CVE-2012-1823**라는 취약점을 기반으로 한 **PHP-CGI 명령어 인젝션** 공격입니다.
+CGI 방식으로 PHP가 실행될 때 쿼리스트링에서 ini 설정을 허용하는 구성이 있을 경우 악용 가능합니.
 
 ### 관련 정보:
 
@@ -213,6 +214,32 @@ Content-Type: text/plain
 | 영향받는 환경 | PHP가 CGI 모드로 동작하며, 웹서버가 `query string`을 해석하지 않고 넘길 경우 |
 | 결과      | 공격자가 임의 PHP 설정 추가 (`-d`), 코드 실행 가능 (`php://input`)    |
 | 피해      | 완전한 서버 탈취 가능 (웹쉘 업로드 등)                               |
+
+---
+
+## 📎 예제 2-2. php-cgi RCE (`php-cgi` Query String `-d` 인젝션 취약점)
+
+```
+https://www.we.net/php-cgi/php-cgi.exe?
+-d cgi.force_redirect=0 
+-d cgi.redirect_status_env 
+-d allow_url_include=1 
+-d auto_prepend_file=php://input
+```
+
+`-d` 옵션은 PHP 실행 시 ini 설정을 커맨드라인에서 덮어쓰는 옵션입니다. CGI 환경에서 취약하게 설정된 경우, 공격자는 **쿼리스트링으로 `-d` 옵션을 전달**해 런타임 ini 값을 변경할 수 있습니다. 
+
+* `cgi.force_redirect=0` — 일부 보호 메커니즘을 비활성화해 직접 CGI 실행을 허용하게 함(취약 환경에서 필요).
+* `allow_url_include=1` — 원격 URL 포함 허용(위험).
+* `auto_prepend_file=php://input` — PHP가 스크립트를 실행하기 전에 HTTP 본문(POST 바디)을 포함하도록 설정. 즉, 공격자는 POST 몸체에 PHP 코드를 넣으면 그 코드가 자동으로 포함되어 실행됩니다.
+
+공격자는 이 GET(또는 GET+POST) 요청으로 PHP 런타임 설정을 바꾸고 **POST 본문에 담긴 PHP 코드가 곧바로 실행되게** 만들어 RCE를 달성하려 합니다.
+
+1. 공격자가 `php-cgi.exe? -d ... auto_prepend_file=php://input` 형태로 요청 보냄.
+2. 웹서버가 해당 php-cgi를 CGI로 실행하면서 `-d` 파라미터를 적용(취약한 설정이면).
+3. 공격자는 같은 요청에서 POST 바디에 `<?php system($_GET['cmd']); ?>` 같은 PHP 페이로드를 넣음.
+4. PHP가 요청을 처리할 때 `php://input` (POST body)을 자동 포함 → 페이로드가 실행됨 → RCE 달성.
+5. 공격 완료 후 흔적 제거(예: unlink 같은 PHP 명령)도 가능.
 
 ---
 
