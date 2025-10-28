@@ -179,9 +179,8 @@ POST /hello.world?-d allow_url_include=1 -d auto_prepend_file=php://input
 
 > `%AD`는 실제로는 **하이픈(-)** 의 잘못된 인코딩 (`-d`), `%3d`는 `=`를 의미합니다.
 
----
 
-## 🧠 무슨 뜻인가요?
+### 🧠 무슨 뜻인가요?
 
 이 요청은 PHP 인터프리터에게 다음을 강제로 전달하려는 시도입니다:
 
@@ -198,9 +197,8 @@ POST /hello.world?-d allow_url_include=1 -d auto_prepend_file=php://input
 * **POST 요청 본문에 PHP 코드를 넣고**
 * **그걸 실행하도록 만듦**
 
----
 
-## 🔥 예: 실제 공격 흐름
+### 실제 공격 흐름
 
 ```http
 POST /hello.world?-d allow_url_include=1 -d auto_prepend_file=php://input HTTP/1.1
@@ -212,9 +210,8 @@ Content-Type: text/plain
 ➡️ 이 요청이 성공하면, **`id` 명령이 서버에서 실행되고**, 결과가 응답으로 돌아옵니다.
 결국 공격자는 원격에서 시스템 명령을 자유롭게 실행할 수 있게 됩니다.
 
----
 
-## 🧨 전형적인 PHP CGI 취약점 공격
+### 🔥 전형적인 PHP CGI 취약점 공격
 
 이건 **CVE-2012-1823**라는 취약점을 기반으로 한 **PHP-CGI 명령어 인젝션** 공격입니다.
 
