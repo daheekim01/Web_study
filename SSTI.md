@@ -1,4 +1,4 @@
-## SSTI/Expression Injection (서버사이드 템플릿/표현식 주입 시도)
+## 🐨 SSTI/Expression Injection (서버사이드 템플릿/표현식 주입 시도)
 
 SSTI(Server-Side Template Injection)는 서버 측에서 사용하는 템플릿 엔진이 사용자 입력을 적절하게 필터링하지 않으면 발생할 수 있는 취약점입니다. 이 취약점은 공격자가 템플릿 엔진의 기능을 악용하여 서버 측에서 코드를 실행할 수 있게 만듭니다.
 
