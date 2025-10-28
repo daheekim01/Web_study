@@ -170,7 +170,7 @@ Host: victim.com
 POST /hello.world?%ADd+allow_url_include%3d1+%ADd+auto_prepend_file%3dphp://input HTTP/1.1
 ```
 
-### 🔍 디코딩하면:
+### 디코딩하면:
 
 ```
 POST /hello.world?-d allow_url_include=1 -d auto_prepend_file=php://input
@@ -178,8 +178,6 @@ POST /hello.world?-d allow_url_include=1 -d auto_prepend_file=php://input
 
 > `%AD`는 실제로는 **하이픈(-)** 의 잘못된 인코딩 (`-d`), `%3d`는 `=`를 의미합니다.
 
-
-### 🧠 무슨 뜻인가요?
 
 이 요청은 PHP 인터프리터에게 다음을 강제로 전달하려는 시도입니다:
 
@@ -207,7 +205,7 @@ Content-Type: text/plain
 
 이건 **CVE-2012-1823**라는 취약점을 기반으로 한 **PHP-CGI 명령어 인젝션** 공격입니다.
 
-### 📌 관련 정보:
+### 관련 정보:
 
 | 항목      | 내용                                                    |
 | ------- | ----------------------------------------------------- |
@@ -273,7 +271,7 @@ echo stream_get_contents($sp71a4e7[1]);
   * 취약한 플러그인/테마(특히 워드프레스)
   * 미스컨피규어된 eval/인클루드 사용 코드
 
-### 🛹 변형/유사 페이로드 (공격자들이 자주 쓰는 다른 함수들)
+### 📌 변형/유사 페이로드 (공격자들이 자주 쓰는 다른 함수들)
 
 * `system('command')`, `exec('command', $out)`, `shell_exec('command')`, `` `command` `` (백틱), `popen()`, `passthru()`
 * `proc_open`은 더 정교한 I/O 제어가 가능해서 선호되기도 함.
