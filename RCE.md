@@ -68,7 +68,7 @@
 응답에 `okhacked`가 포함되면 성공 확인, 이후 추가로 민감정보(설정파일, 소스코드)를 수집하거나 RCE로 확장 가능
 
 ```
-s\=/index/\\think\\Request/input&filter\=var_dump&data\�d3e827b198d120okhacked
+s\=/index/\\think\\Request/input&filter\=var_dump&data\d3e827b198d120okhacked
 ```
 
 
@@ -85,7 +85,6 @@ s\=/index/\\think\\Request/input&filter\=var_dump&data\�d3e827b198d120okhacked
 * `data=�d3e827b198d120okhacked`
 
   * `data`는 호출될 입력값. `okhacked` 같은 문자열은 **성공 판별자**(attacker marker)로 흔히 사용됩니다.
-  * 앞부분의 `�` 같은 문자는 인코딩 문제(로그 저장/전송 중 깨짐)일 수 있으며, 실제 요청에서는 base64/hex/특수문자 등이 올 수 있습니다.
   * `d3e827b198d120`처럼 보이는 부분은 페이로드 식별자(해시/토큰)거나 단순 랜덤 문자열일 가능성이 큽니다.
 
 요약하면: 공격자는 `s` 파라미터로 내부 함수(또는 메서드)를 호출하고, `filter` 파라미터로 `var_dump`를 강제로 적용해 `data` 내용을 서버 응답으로 받아보려는 **정보 노출 / 취약성 탐지** 시도를 했습니다.
@@ -189,14 +188,6 @@ POST /hello.world?-d allow_url_include=1 -d auto_prepend_file=php://input
 | `-d allow_url_include=1`           | PHP 설정을 동적으로 바꿔서 외부 URL 포함 허용    |
 | `-d auto_prepend_file=php://input` | 요청 본문에 포함된 코드를 PHP 파일처럼 실행하겠다는 뜻 |
 
-즉:
-
-### ▶ 공격자가 하고 싶은 것:
-
-* **PHP 설정을 강제로 우회해서**
-* **POST 요청 본문에 PHP 코드를 넣고**
-* **그걸 실행하도록 만듦**
-
 
 ### 실제 공격 흐름
 
@@ -207,7 +198,8 @@ Content-Type: text/plain
 <?php system('id'); ?>
 ```
 
-➡️ 이 요청이 성공하면, **`id` 명령이 서버에서 실행되고**, 결과가 응답으로 돌아옵니다.
+➡️ 공격자는 **PHP 설정을 강제로 우회해서** POST 요청 본문에 PHP 코드를 넣고 그걸 실행하도록 만듦
+이 요청이 성공하면, **`id` 명령이 서버에서 실행되고**, 결과가 응답으로 돌아옵니다.
 결국 공격자는 원격에서 시스템 명령을 자유롭게 실행할 수 있게 됩니다.
 
 
