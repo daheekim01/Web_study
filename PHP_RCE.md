@@ -224,6 +224,23 @@ CGI 방식으로 PHP가 실행될 때 쿼리스트링에서 ini 설정을 허용
 ## 📎 예제 2-2. php-cgi RCE (`php-cgi` Query String `-d` 인젝션 취약점)
 
 ```
+https://www.e.com/php-cgi/php-cgi.exe?%ADd+cgi.force_redirect%3D0+%ADd+cgi.redirect_status_env+%ADd+allow_url_include%3D1+%ADd+auto_prepend_file%3Dphp://input
+```
+
+| 구성                                      | 의미                                                                                                                                                                                    |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `php-cgi/php-cgi.exe`                   | 서버상에 CGI 방식 `php‑cgi` 실행파일이 웹서버를 통해 노출되어 있는 경로입니다 — 정상적 환경에서는 잘 노출되지 않아야 합니다.                                                                                                         |
+| `?%ADd+`                                | 여기서 `%AD` 는 URL 인코딩된 바이트(“soft hyphen”‑0xAD)로 실제로는 `-d ` (하이픈 d 옵션)로 의도된 것으로, 일부 필터 회피 또는 Unicode→ASCII 변환 우회를 노리는 기법입니다.                                     |
+| `+cgi.force_redirect%3D0`               | PHP CGI 설정 중 `cgi.force_redirect=0` 로 바꾸려는 옵션입니다. 이 설정은 보통 CGI 실행 시 웹서버가 리디렉션을 강제하는 보호를 우회하기 위한 설정입니다.                                                                                |
+| `+%ADd+cgi.redirect_status_env`         | `-d cgi.redirect_status_env` 옵션으로 보입니다 — 웹서버/CGI 모드의 리다이렉션/상태환경 설정을 조작하려는 시도입니다.                                                                                                 |
+| `+%ADd+allow_url_include%3D1`           | `-d allow_url_include=1` 옵션. PHP에서 일반적으로 `allow_url_include`는 기본적으로 **off** 설정이며, 이를 on으로 바꿔 원격 파일 또는 스트림을 포함(include)할 수 있게 만들려는 설정입니다.                             |
+| `+%ADd+auto_prepend_file%3Dphp://input` | `-d auto_prepend_file=php://input` 옵션. 이 설정은 **요청 본문(POST body 등) 전체를 PHP 코드로 취급하여 자동으로 그 코드부터 실행**하게 만드는 옵션입니다. 즉, attacker가 본문에 PHP 코드를 넣으면 바로 실행될 가능성이 생깁니다.  |
+
+> %ADd 와 같은 soft‑hyphen 인코딩은 일부 필터나 방화벽이 하이픈(-d)을 필터링/차단할 때 우회하는 기법
+
+인코딩하면 아래와 같습니다.  
+
+```
 https://www.we.net/php-cgi/php-cgi.exe?
 -d cgi.force_redirect=0 
 -d cgi.redirect_status_env 
