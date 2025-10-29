@@ -68,6 +68,7 @@ https://www.example.com/index.php?s\=/Index/\\think\\app/invokefunction&function
   * `hello` : 흔히 쓰이는 “마커”(fingerprint) — 파일이 실제로 생성됐는지 확인하려는 식별자.
  
 <br>
+
 ### 🐻‍❄️ 아래 페이로드도 `임의 함수 호출(POC)`
 
 ```
