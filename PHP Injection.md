@@ -86,14 +86,13 @@ Content-Type: application/x-php
 | CMD Injection Attack Detected (Common PHP Function Detected) v.1 | `<?php echo md5("cmd"); ?>` | `md5(`  |
 | PHP Injection Attack (Opening Tag) v.1                           | `<?php echo md5("cmd"); ?>` | `<?php` |
 
+<br>
 
 ### 🔍 CMD Injection Attack Detected (Common PHP Function Detected)
 
 * PHP 코드 중 **명령어 실행 또는 문자열 조작**에 자주 쓰이는 함수 감지
 * 특히 `md5(` 같은 함수는 **우회 체크나 해시 조작에 사용되는 흔한 패턴**
 >  공격자가 **파라미터 이름에 PHP 코드**를 심어서 서버가 이를 처리하게 만들려는 시도
-
-<br>
 
 ### 🛠️ PHP Injection Attack (Opening Tag)
 
