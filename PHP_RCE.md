@@ -1,4 +1,4 @@
-## 🥞 **PHP Code Injection / Remote Code Execution**
+## 🥞 **PHP Code Injection / Remote Code Execution** 예제
 
 ### A. 업로드 → 웹루트에 `.php`로 저장 → Stored WebShell 
 
@@ -21,7 +21,9 @@
 * 공격자가 로그(예: access.log)에 `<?php ... ?>`를 주입하고, 어딘가 LFI 취약점이 있으면 `include('/var/log/apache2/access.log')`로 인해 코드 실행 가능.
 
 
-**흔한 주입 경로**
+### E. 그 외 
+
+* **흔한 주입 경로**
 
   * 파일 업로드 취약점(확장자/확장자 검증 실패)
   * LFI(Local File Inclusion) 취약점을 통한 로그/업로드 파일 포함
