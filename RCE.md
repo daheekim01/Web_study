@@ -1,3 +1,28 @@
+## 🥞 **PHP Code Injection / Remote Code Execution**
+
+### A. 업로드 → 웹루트에 `.php`로 저장 → Stored WebShell 
+
+취약한 `up.cgi`가 `uploads/`에 `$_FILES['file']['name']` 그대로 저장하고 `uploads/`가 웹에서 PHP를 실행하도록 설정되어 있으면 RCE.
+
+취약점 흐름:
+
+* POST로 `shell.php`(내용: `<?php ... ?>`) 업로드 → `/uploads/shell.php` 생성 → `GET /uploads/shell.php` 요청 → 서버가 PHP 해석 → 공격자 명령 실행.
+
+### B. 파일명 경로 조작 → 디렉토리 트래버설
+
+업로드 핸들러가 파일명을 `../../www/some.php`처럼 조작해서 의도한 위치(예: 웹루트)로 쓰도록 허용하면 RCE.
+
+### C. 쉘 명령 인젝션
+
+업로드 핸들러가 `system("mv $tmp $dest");` 처럼 외부 입력($dest)에 검증 없이 넣으면 `; rm -rf /` 같은 인젝션 가능.
+
+### D. 로그 포이즈닝 + LFI
+
+* 공격자가 로그(예: access.log)에 `<?php ... ?>`를 주입하고, 어딘가 LFI 취약점이 있으면 `include('/var/log/apache2/access.log')`로 인해 코드 실행 가능.
+
+---
+
+
 ## 📎 예제 1. ThinkPHP `invokefunction` POC (MD5 페이로드)
 
 * 아래 페이로드는 `임의 함수 호출(POC)`, 성공하면 **RCE로 악용 가능**
@@ -12,13 +37,6 @@
 * 의도: 내부에서 `call_user_func_array('md5', ['HelloThinkPHP'])` 실행 유도 → 응답으로 MD5가 나오면 호출 성공.
 
 
-### 완전한 RCE가 되려면 (필수 조건)
-
-1. 공격자가 `vars[0]` 등으로 `system`, `exec`, `shell_exec`, `eval` 등을 지정할 수 있어야 함
-2. 서버/프레임워크가 **함수명 검증(화이트리스트)** 또는 **disable_functions** 같은 보호를 하지 않을 것
-3. 함수 실행 결과가 외부로 노출되거나 파일 쓰기/명령 실행이 가능할 것
-
-
 ### 불완전(실패) 조건 예시
 
 * `invokefunction` 접근에 인증/권한 필요
@@ -28,41 +46,15 @@
 * 호출 결과가 외부에 노출되지 않음
 
 
-### 즉시 탐지/확인
+### 완전한 RCE가 되려면 
 
-* 요청 패턴 로그 검색
+1. 공격자가 `vars[0]` 등으로 `system`, `exec`, `shell_exec`, `eval` 등을 지정할 수 있어야 함
+2. 서버/프레임워크가 **함수명 검증(화이트리스트)** 또는 **disable_functions** 같은 보호를 하지 않을 것
+3. 함수 실행 결과가 외부로 노출되거나 파일 쓰기/명령 실행이 가능할 것
 
-  ```bash
-  # nginx/apache 액세스 로그에서 탐지
-  grep -R "invokefunction" /var/log/nginx* /var/log/apache2* 
-  grep -R "call_user_func_array" /var/log/nginx* /var/log/apache2*
-  grep -R "vars%5B0%5D" /var/log/nginx* /var/log/apache2*
-  ```
-* POC 응답 직접 확인 (서버가 MD5 반환시)
-
-  ```bash
-  # 로컬에서 MD5 확인 (예: HelloThinkPHP)
-  echo -n "HelloThinkPHP" | md5sum
-  ```
-* PHP 환경 확인
-
-  ```bash
-  php -r "echo ini_get('disable_functions').PHP_EOL;"
-  php -r "echo ini_get('open_basedir').PHP_EOL;"
-  ```
-
-### 예방법
-
-1. WAF/방화벽에서 아래 패턴 차단:
-   * `think\Container/invokefunction`
-   * `call_user_func_array`
-   * `vars[0]=`, `vars[1]=` 등의 인자 전달 패턴
-2. ThinkPHP 버전 즉시 패치(공식 패치 적용)
-3. `disable_functions` 에 `system, exec, shell_exec, passthru, popen, proc_open, eval` 등 추가 검토
-4. `open_basedir`/파일 권한 제한, 웹 프로세스 쓰기권한 최소화
-5. 전체 포렌식(응답으로 POC 성공 시 필수)
 
 ---
+
 ## 📎 예제 1-1. ThinkPHP 내부 메서드 호출
 엔드포인트가 **임의 함수 호출/입력 필터링 취약**이 있는지 탐지(예: ajax.do 와 같은 파일 경로에서)
 응답에 `okhacked`가 포함되면 성공 확인, 이후 추가로 민감정보(설정파일, 소스코드)를 수집하거나 RCE로 확장 가능
@@ -82,7 +74,7 @@ s\=/index/\\think\\Request/input&filter\=var_dump&data\d3e827b198d120okhacked
 
   * 공격자는 서버 측에서 **전달된 값에 `var_dump`를 적용하게 만들려 함**. 즉, 서버가 `filter` 파라미터를 곧바로 함수명으로 취급해 `filter(data)` 처럼 호출하는 취약한 처리 로직을 노린 것입니다. 성공하면 서버가 `var_dump()` 결과를 그대로 응답에 출력합니다(정보 노출 확인용).
 
-* `data=�d3e827b198d120okhacked`
+* `data=d3e827b198d120okhacked`
 
   * `data`는 호출될 입력값. `okhacked` 같은 문자열은 **성공 판별자**(attacker marker)로 흔히 사용됩니다.
   * `d3e827b198d120`처럼 보이는 부분은 페이로드 식별자(해시/토큰)거나 단순 랜덤 문자열일 가능성이 큽니다.
@@ -109,6 +101,7 @@ php-cgi는 PHP 인터프리터의 CGI(Common Gateway Interface) 실행 파일로
 3. 요청의 쿼리스트링에 `-d auto_prepend_file=php://input`(또는 유사 지시문)이 **정확히 포함**되어야 함.
 4. 요청 바디(POST) 에 **실행 가능한 PHP 코드**(예: `<?php ... ?>`)가 포함되어야 하고, 서버가 그 내용을 실행하도록 설정 변경이 가능해야 함.
 5. WAF/방화벽/서버 설정이 요청을 차단하지 않아야 함.
+
 
 ### 페이로드 예시
 
@@ -137,29 +130,6 @@ Host: victim.com
 * URL은 반드시 올바르게 URL-인코딩 (예: `-d+auto_prepend_file=php://input` → `-d%20auto_prepend_file%3Dphp%3A%2F%2Finput`)
 
 
-### 즉시 탐지/확인
-
-* 액세스 로그에 `php-cgi` 또는 `php-cgi.exe` 호출이 있는지:
-
-  ```bash
-  grep -R "php-cgi" /var/log/nginx* /var/log/apache2*
-  ```
-* 의심 쿼리 문자열(`-d` 또는 `auto_prepend_file` 또는 `php://input`) 검색:
-
-  ```bash
-  grep -R "%2d\|auto_prepend_file\|php://input" /var/log/nginx* /var/log/apache2* || true
-  ```
-* HTTP 응답/애플리케이션 로그에 POC 토큰(예: `RCE_OK_` 또는 `33zVO2dZ...`) 검색:
-
-  ```bash
-  grep -R "RCE_OK_12345\|33zVO2dZw" /var/log/*
-  ```
-* 웹루트에 임의 파일 생성/변경 여부 확인(특히 .php 파일):
-
-  ```bash
-  find /var/www -type f -iname "*.php" -mtime -7 -ls
-  ```
-
 ---
 
 ## 📎 예제 2-1. php-cgi RCE (`php-cgi` Query String `-d` 인젝션 취약점)
@@ -176,8 +146,7 @@ POST /hello.world?%ADd+allow_url_include%3d1+%ADd+auto_prepend_file%3dphp://inpu
 POST /hello.world?-d allow_url_include=1 -d auto_prepend_file=php://input
 ```
 
-> `%AD`는 실제로는 **하이픈(-)** 의 잘못된 인코딩 (`-d`), `%3d`는 `=`를 의미합니다.
-
+> `%AD`는 실제로는 **하이픈(-)** 의 잘못된 인코딩 (`-d`), `%3d`는 `=`를 의미.
 
 이 요청은 PHP 인터프리터에게 다음을 강제로 전달하려는 시도입니다:
 
