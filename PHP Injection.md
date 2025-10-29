@@ -95,6 +95,7 @@ Content-Type: application/x-php
 >  공격자가 **파라미터 이름에 PHP 코드**를 심어서 서버가 이를 처리하게 만들려는 시도
 
 <br>
+
 ### 🛠️ **PHP Injection Attack (Opening Tag) v.1**
 
 * PHP 코드 인젝션 탐지
