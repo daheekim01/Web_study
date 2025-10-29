@@ -114,7 +114,7 @@ PHP 코드 태그. 공격자가 업로드하려는 **빈 PHP 태그**(혹은 간
 * `<!DOCTYPE html> <html> <head> <title>Resultz</title> ... <form enctype\=`
 HTML 폼 마크업(업로더 폼)을 보여줍니다. 공격자가 실제 업로드 폼을 렌더링/전송하려 했거나, 업로드 폼을 모사한 페이로드(파일 업로드 시퀀스)를 로그에 남긴 것일 수 있습니다.
 
-* 요청 방식(POST)과 대상 URL. `admin-ajax.php?action=wps_membership_csv_file_upload` 
+* `admin-ajax.php?action=wps_membership_csv_file_upload` 
 WordPress(또는 플러그인)의 AJAX 엔드포인트로, CSV 업로드 기능을 수행하는 액션인 듯합니다. 이 엔드포인트가 취약하면 파일을 받아 서버에 저장할 가능성이 있습니다.
 `wps_membership_csv_file_upload` 라는 이름은 멤버십 플러그인 또는 커스텀 액션을 가리키고, 과거에 플러그인 업로드 취약점들이 종종 이런 경로에서 발생했습니다.
 
