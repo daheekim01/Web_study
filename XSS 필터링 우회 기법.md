@@ -42,11 +42,9 @@
 ```
 
 이 코드에서는 **`data:`** URL을 사용하여 **SVG 이미지** 내에서 **`onload`** 이벤트를 트리거하여 자바스크립트가 실행됩니다.
+<br>
 
-
-
-
-## 🔐**`data:` URL을 통한 공격** 
+#### 🔐`data:` URL을 통한 공격
 
 
 `data:` URL은 URI 스킴의 일종으로, 외부 리소스를 요청하지 않고 **데이터 자체를 URI 안에 포함**시켜 브라우저가 이를 직접 렌더링하거나 실행하게 만드는 방식입니다.
@@ -61,8 +59,6 @@ data:[<MIME-type>][;base64],<data>
 <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUg...">
 <script src="data:text/javascript,alert('XSS')"></script>
 ```
-
-
 
 ---
 
