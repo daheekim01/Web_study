@@ -189,8 +189,50 @@ WebSocket을 활용하여 **클라이언트-서버** 간의 실시간 통신을 
   ```
 
 ---
+### 취약점 우회 방법 및 테스트
 
-## 공격 예시
+1. **HTML 엔티티 인코딩 우회**:
+
+   * 만약 `javascript:` 프로토콜이 차단된 경우, **HTML 엔티티**로 우회할 수 있습니다. 예를 들어:
+
+     ```html
+     <a href="&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58;alert(1)">Click me</a>
+     ```
+
+     이처럼 `javascript:`를 HTML 문자 코드로 바꾸어 우회할 수 있습니다.
+
+2. **DOM Based XSS**:
+
+   * 만약 입력값이 **DOM을 통해 삽입**될 때 필터링이 제대로 되지 않으면, XSS를 발생시킬 수 있습니다. 예를 들어:
+
+     ```javascript
+     let inputValue = document.getElementById('SearchWord').value;
+     document.getElementById('output').innerHTML = inputValue;
+     ```
+
+     위 코드에서는 `<input>`의 `value` 속성값이 **HTML로 삽입**되기 때문에 **XSS**가 발생할 수 있습니다.
+
+3. **자바스크립트와 HTML의 결합**:
+
+   * `input` 요소의 `value`에 `javascript:` 프로토콜을 포함시키는 것 외에도, 다른 방식으로 **자바스크립트 코드를 실행**할 수 있는 우회 방법을 찾을 수 있습니다. 예를 들어:
+
+     ```html
+     <input type="text" id="SearchWord" value="<script>alert('XSS')</script>">
+     ```
+
+     또는 **자바스크립트 코드**를 **URL 인코딩**하여 입력할 수도 있습니다.
+
+4. **이벤트 핸들러 조작**:
+
+   * **`onfocus`**, **`onblur`** 등과 같은 HTML 이벤트 핸들러를 사용하여 입력값을 실행할 수 있습니다. 예를 들어:
+
+     ```html
+     <input type="text" id="SearchWord" value="<input onfocus=alert(1)>">
+     ```
+
+---
+
+## ✉️ 공격 예시 (1)
  **HTML 엔티티 인코딩(HTML Entity Encoding)** 또는 **입력값 필터링** 문제로, 주어진 코드에서 `<a href="javascript:alert('23')">Click me</a>`와 같은 태그가 그대로 HTML에 반영되는 대신, HTML 특수 문자가 엔티티 형식으로 변환되어 `<input>` 요소의 `value` 속성에 삽입되는 경우입니다. 
 
   ```html
@@ -240,7 +282,7 @@ WebSocket을 활용하여 **클라이언트-서버** 간의 실시간 통신을 
 
 \*\*"Click me"\*\*를 클릭하는 순간, **`<a>` 태그의 `href` 속성**에 정의된 **`javascript:alert(1)`** 코드가 실행되어, **알림창**이 뜨게 되는 원리입니다.
 
----
+<br>
 
 ### 문제 분석
 
@@ -254,7 +296,7 @@ WebSocket을 활용하여 **클라이언트-서버** 간의 실시간 통신을 
 
    * 이 문제에서는 `href="javascript:alert('23')"`가 제대로 작동하지 않는데, `javascript:` 프로토콜이 CSP(Content Security Policy)나 필터링에서 차단되었을 가능성이 높습니다.
 
----
+<br>
 
 ### 취약점 진단 방법
 
@@ -279,43 +321,54 @@ WebSocket을 활용하여 **클라이언트-서버** 간의 실시간 통신을 
 
 ---     
 
-### 취약점 우회 방법 및 테스트
+## ✉️ 공격 예시 (2)
 
-1. **HTML 엔티티 인코딩 우회**:
 
-   * 만약 `javascript:` 프로토콜이 차단된 경우, **HTML 엔티티**로 우회할 수 있습니다. 예를 들어:
+```
+5606560'; document.location.href = url; } redbool(); </script> <meta http-equiv=\"refresh\" content=\"0;url=https://www.google.com/\" /> </head> </html> ,</script,document.location,tion.href\=url;}redbool();</script><metahttp-equiv\=\"refresh
+```
+`document.location.href = url;` (리다이렉트) 또는 `<meta http-equiv="refresh"...>` 를 통해 사용자를 원격 사이트로 보내려는 공격
 
-     ```html
-     <a href="&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58;alert(1)">Click me</a>
-     ```
 
-     이처럼 `javascript:`를 HTML 문자 코드로 바꾸어 우회할 수 있습니다.
+### 1) `5606560';` (가장 중요한 우회 지점)
 
-2. **DOM Based XSS**:
+이 조각은 매우 전형적인 **문자열/쿼트 종료(quote breaking)** 패턴입니다.
+숫자 `5606560` 자체는 의미가 없고, 단지 기존 문자열(예: id)이 깔끔하게 닫히도록 숫자 + 작은따옴표(`'`)를 섞은 것으로 보입니다. 공격자는 흔히 `';` 또는 `');` 같은 패턴을 씁니다.
 
-   * 만약 입력값이 **DOM을 통해 삽입**될 때 필터링이 제대로 되지 않으면, XSS를 발생시킬 수 있습니다. 예를 들어:
+* 만약 공격자가 **서버가 사용자 입력을 자바스크립트 코드 내부의 작은따옴표 문자열(`'...'`)로 그대로 넣는** 취약한 페이지에 이 값을 넣는다면:
 
-     ```javascript
-     let inputValue = document.getElementById('SearchWord').value;
-     document.getElementById('output').innerHTML = inputValue;
-     ```
+  * 취약한 코드 예:
 
-     위 코드에서는 `<input>`의 `value` 속성값이 **HTML로 삽입**되기 때문에 **XSS**가 발생할 수 있습니다.
+    ```html
+    <script>
+      var id = 'USER_INPUT_HERE';
+    </script>
+    ```
+  * `USER_INPUT_HERE` 자리에 `5606560'; document.location.href = url; //` 를 넣으면:
 
-3. **자바스크립트와 HTML의 결합**:
+    ```html
+    <script>
+      var id = '5606560'; document.location.href = url; //';
+    </script>
+    ```
 
-   * `input` 요소의 `value`에 `javascript:` 프로토콜을 포함시키는 것 외에도, 다른 방식으로 **자바스크립트 코드를 실행**할 수 있는 우회 방법을 찾을 수 있습니다. 예를 들어:
+    이렇게 되며, `';` 로 원래의 문자열이 닫히고 그 다음 `document.location.href = url;` 이 **정상적인 JS 명령**으로 실행됩니다. 즉 **문자열을 종료시키는(quote-termination) 공격**입니다.
+     **JS 문자열(작은따옴표) 컨텍스트에서 문자열을 닫아 자바스크립트를 삽입하려는 시도**입니다.
 
-     ```html
-     <input type="text" id="SearchWord" value="<script>alert('XSS')</script>">
-     ```
 
-     또는 **자바스크립트 코드**를 **URL 인코딩**하여 입력할 수도 있습니다.
+### 2) `document.location.href = url;` 
 
-4. **이벤트 핸들러 조작**:
+* 브라우저를 특정 URL로 이동시키는 표준 JS 코드입니다.
+* 보통 `url` 이라는 변수는 공격자가 조작하거나 (예: `url='https://attacker.com'`) 또는 페이지에 이미 정의된 `url` 변수를 이용하려는 시도입니다.
+* 완전한 형태로 삽입되면 즉시 리다이렉트 실행됩니다.
 
-   * **`onfocus`**, **`onblur`** 등과 같은 HTML 이벤트 핸들러를 사용하여 입력값을 실행할 수 있습니다. 예를 들어:
 
-     ```html
-     <input type="text" id="SearchWord" value="<input onfocus=alert(1)>">
-     ```
+### 3) `redbool();`
+
+* 임의의 함수 호출처럼 보입니다. 실제로 페이지에 `redbool` 이라는 함수가 없으면 `ReferenceError`가 발생해서 스크립트가 중단될 수 있습니다.
+  
+### 4) `<meta http-equiv="refresh" content="0;url=https://www.google.com/" />` — HTML 리다이렉트
+
+* `<meta http-equiv="refresh" content="0;url=...">` 는 HTML 레벨에서 즉시 리다이렉트 시킵니다 (특히 `<head>` 안에 있으면).
+* 단, 이 태그가 유효하려면 **문서의 `<head>` 내부** 또는 브라우저가 메타를 허용하는 위치에 있어야 합니다. `<body>`에 있어도 동작하는 브라우저가 있지만 표준은 `<head>`입니다.
+
