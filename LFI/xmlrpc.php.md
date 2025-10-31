@@ -72,6 +72,8 @@ XML-RPC에서 발생할 수 있는 **주요 보안 취약점**은 다음과 같�
    * 만약 유효한 사용자명을 알고 있다면 더 유리합니다.
    * 유효한 사용자명을 찾기 위해 `wpscan` 도구 사용을 추천합니다.
 
+* XML_PAIRS:/methodCall/methodName` 경로에서 `match: wp.getusersblogs`가 탐지되었다면, 이는 공격자가 WordPress의 XML-RPC API를 이용해 이미 어떤 유효한 사용자 ID(아이디, 로그인 이름)를 알고 있을 가능성이 매우 높다.
+
 ---
 
 * 위 https://medium.com/infosec-notes/wordpress-hacking-2025-03985e7d2e08 참고
@@ -79,7 +81,6 @@ XML-RPC에서 발생할 수 있는 **주요 보안 취약점**은 다음과 같�
 
 ---
 
-XML_PAIRS:/methodCall/methodName` 경로에서 `match: wp.getusersblogs`가 탐지되었다면, 이는 **공격자가 WordPress의 XML-RPC API를 이용해 이미 어떤 유효한 사용자 ID(아이디, 로그인 이름)를 알고 있을 가능성이 매우 높습니다.**
 
 ## 🔍 분석 요약
 
