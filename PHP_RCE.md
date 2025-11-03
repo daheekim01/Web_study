@@ -406,9 +406,9 @@ create_function(post(2), post(3))
 
 ---
 
-## 📎 예제 4. 웹루트 .php Stored WebShell 기반 웹 백도어 및 원격 쉘 공격
+## 📎 예제 4. 웹루트 php Stored WebShell 기반 웹 백도어 및 원격 쉘 공격
 
-(1)
+#### (1)
 .php로 끝나는 경로에서, `eval(base64_decode($_POST[z0]))` 형태로 외부에서 전송한(base64로 인코딩된) 데이터를 디코딩 → `eval()`로 실행하겠다는 코드. 
 
 
@@ -422,7 +422,7 @@ create_function(post(2), post(3))
 
 <br>
 
-(2) LFI→RCE(파일 쓰기 또는 애플리케이션/유틸리티 오용) 익스플로잇 패턴 
+#### (2) LFI→RCE(파일 쓰기 또는 애플리케이션/유틸리티 오용) 익스플로잇 패턴 
 `pearcmd` 같은 로컬 유틸리티의 기능(파일 생성/설정 작성 등)을 오용하는 전형적 공격입니다.
 
 ```
