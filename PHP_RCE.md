@@ -408,6 +408,7 @@ create_function(post(2), post(3))
 
 ## 📎 예제 4. 웹루트 .php Stored WebShell 기반 웹 백도어 및 원격 쉘 공격
 
+(1)
 .php로 끝나는 경로에서, `eval(base64_decode($_POST[z0]))` 형태로 외부에서 전송한(base64로 인코딩된) 데이터를 디코딩 → `eval()`로 실행하겠다는 코드. 
 
 
@@ -420,5 +421,18 @@ create_function(post(2), post(3))
 * `@`는 에러 억제 연산자(경고/에러 감추기) — 탐지 어렵게 하려는 시도.
 
 
+(2) LFI→RCE(파일 쓰기 또는 애플리케이션/유틸리티 오용) 익스플로잇 패턴 
+`pearcmd` 같은 로컬 유틸리티의 기능(파일 생성/설정 작성 등)을 오용하는 전형적 공격입니다.
+
+```
+/index.php?lang=../../../../../../../../usr/local/lib/php/pearcmd&+config-create+/&/<?echo(md5("hi"));?>+/tmp/index1.php
+```
 
 
+* `lang=` 같은 파라미터를 통해 **경로(파일)를 포함(include)** 하도록 처리되는 취약점(LFI)을 노립니다(예: `include($_GET['lang'])`).
+* `../../.../usr/local/lib/php/pearcmd` 같은 경로는 시스템에 설치된 PEAR의 `pearcmd` 실행 스크립트(또는 유사 파일)를 가리킵니다.
+* 이어서 `&+config-create+/&/<?echo(md5("hi"));?>+/tmp/index1.php` 같은 추가 문자열은 pear 명령형 인터페이스를 통해 **파일 생성(config-create)** 을 호출해 `<?echo(md5("hi"));?>` 같은 PHP 코드를 **/tmp/index1.php** 에 쓰도록 시도하는 패턴입니다.
+* 결과적으로 공격자는 LFI를 통해 시스템의 다른 기능(pearcmd 등)을 포함/호출하여 **원격에서 임의 PHP 파일을 생성**(웹셸)하고, 그 파일에 접근해 임의 코드 실행(RCE)을 달성하려고 합니다.
+
+* 만들어진 `/tmp/index1.php`에 PHP 코드가 들어가면(예: `<?echo(md5("hi"));?>`) 웹에서 해당 파일을 호출하여 코드 실행(원격 명령/웹셸) 가능.
+* 공격자는 단순한 `md5("hi")` 테스트를 사용해 성공 여부 확인 후 더 위험한 코드(`system()`, `passthru()`, webshell 등)로 바꿀 수 있음.
