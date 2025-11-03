@@ -406,7 +406,7 @@ create_function(post(2), post(3))
 
 ---
 
-## 📎 예제 4. PHP Webshell 업로드를 통한 웹 백도어 및 원격 쉘 공격
+## 📎 예제 4. 웹루트 .php Stored WebShell 기반 웹 백도어 및 원격 쉘 공격
 
 .php로 끝나는 경로에서, `eval(base64_decode($_POST[z0]))` 형태로 외부에서 전송한(base64로 인코딩된) 데이터를 디코딩 → `eval()`로 실행하겠다는 코드. 
 
