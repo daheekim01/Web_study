@@ -420,6 +420,7 @@ create_function(post(2), post(3))
   * 예: POST body `z0=PD9waHAgc3lzdGVtKCd1bmFtZSAtYScpOyA/Pg==` (base64 디코딩하면 `<?php system('uname -a'); ?>`) → 서버가 이를 실행하면 `uname -a` 출력이 반환됩니다.
 * `@`는 에러 억제 연산자(경고/에러 감추기) — 탐지 어렵게 하려는 시도.
 
+<br>
 
 (2) LFI→RCE(파일 쓰기 또는 애플리케이션/유틸리티 오용) 익스플로잇 패턴 
 `pearcmd` 같은 로컬 유틸리티의 기능(파일 생성/설정 작성 등)을 오용하는 전형적 공격입니다.
