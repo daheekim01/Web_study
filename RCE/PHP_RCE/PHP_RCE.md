@@ -155,6 +155,7 @@ https://example.com/php-cgi/php-cgi.exe?%ADd+allow_url_include%3D1+%ADd+auto_pre
 | `-d allow_url_include=1`           | PHP 설정을 동적으로 바꿔서 외부 URL을 `include`/`require` 허용    |
 | `-d auto_prepend_file=php://input` | 요청 바디 `php://input`에 포함된 코드를 실행하겠다는 뜻 |
 
+`-d` 옵션은 PHP 실행 시 ini 설정을 커맨드라인에서 덮어쓰는 옵션입니다. CGI 환경에서 취약하게 설정된 경우, 공격자는 **쿼리스트링으로 `-d` 옵션을 전달**해 런타임 ini 값을 변경할 수 있습니다. 
 
 ### 실제 공격 흐름
 
@@ -198,22 +199,18 @@ CGI 방식으로 PHP가 실행될 때 쿼리스트링에서 ini 설정을 허용
 
 ## 📎 예제 2-2. php-cgi RCE (`php-cgi` Query String `-d` 인젝션 취약점)
 
-`-d` 옵션은 PHP 실행 시 ini 설정을 커맨드라인에서 덮어쓰는 옵션입니다. CGI 환경에서 취약하게 설정된 경우, 공격자는 **쿼리스트링으로 `-d` 옵션을 전달**해 런타임 ini 값을 변경할 수 있습니다. 
+
 
 ```
 https://www.e.com/php-cgi/php-cgi.exe?%ADd+cgi.force_redirect%3D0+%ADd+cgi.redirect_status_env+%ADd+allow_url_include%3D1+%ADd+auto_prepend_file%3Dphp://input
 ```
 
-| 구성                                      | 의미                                                                                                                                                                                    |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `php-cgi/php-cgi.exe`                   | 서버상에 CGI 방식 `php‑cgi` 실행파일이 웹서버를 통해 노출되어 있는 경로입니다 — 정상적 환경에서는 잘 노출되지 않아야 합니다.                                                                                                         |
-| `?%ADd+`                                | 여기서 `%AD` 는 URL 인코딩된 바이트(“soft hyphen”‑0xAD)로 실제로는 `-d ` (하이픈 d 옵션)로 의도된 것으로, 일부 필터 회피 또는 Unicode→ASCII 변환 우회를 노리는 기법입니다.                                     |
-| `+cgi.force_redirect%3D0`               | PHP CGI 설정 중 `cgi.force_redirect=0` 로 바꾸려는 옵션입니다. 이 설정은 보통 CGI 실행 시 웹서버가 리디렉션을 강제하는 보호를 우회하기 위한 설정입니다.                                                                                |
-| `+%ADd+cgi.redirect_status_env`         | `-d cgi.redirect_status_env` 옵션으로 보입니다 — 웹서버/CGI 모드의 리다이렉션/상태환경 설정을 조작하려는 시도입니다.                                                                                                 |
-| `+%ADd+allow_url_include%3D1`           | `-d allow_url_include=1` 옵션. PHP에서 일반적으로 `allow_url_include`는 기본적으로 **off** 설정이며, 이를 on으로 바꿔 원격 파일 또는 스트림을 포함(include)할 수 있게 만들려는 설정입니다.                             |
-| `+%ADd+auto_prepend_file%3Dphp://input` | `-d auto_prepend_file=php://input` 옵션. 이 설정은 **요청 본문(POST body 등) 전체를 PHP 코드로 취급하여 자동으로 그 코드부터 실행**하게 만드는 옵션입니다. 즉, attacker가 본문에 PHP 코드를 넣으면 바로 실행될 가능성이 생깁니다.  |
+* `+cgi.force_redirect%3D0`: PHP CGI 설정 중 `cgi.force_redirect=0` 로 바꾸려는 옵션입니다. 이 설정은 보통 CGI 실행 시 웹서버가 리디렉션을 강제하는 보호를 우회하기 위한 설정입니다.                                                                              
+* `+%ADd+cgi.redirect_status_env`: `-d cgi.redirect_status_env` 옵션으로 보입니다 — 웹서버/CGI 모드의 리다이렉션/상태환경 설정을 조작하려는 시도입니다.                                                                                                
+* `+%ADd+allow_url_include%3D1`: `-d allow_url_include=1` 옵션. PHP에서 일반적으로 `allow_url_include`는 기본적으로 **off** 설정이며, 이를 on으로 바꿔 원격 파일 또는 스트림을 포함(include)할 수 있게 만들려는 설정입니다.                       
+* `+%ADd+auto_prepend_file%3Dphp://input`: `-d auto_prepend_file=php://input` 옵션. 이 설정은 **요청 본문(POST body 등) 전체를 PHP 코드로 취급하여 자동으로 그 코드부터 실행**하게 만드는 옵션입니다. 즉, attacker가 본문에 PHP 코드를 넣으면 바로 실행될 가능성이 생깁니다.  
 
-> %ADd 와 같은 soft‑hyphen 인코딩은 일부 필터나 방화벽이 하이픈(-d)을 필터링/차단할 때 우회하는 기법
+> 여기서 `%AD` 는 URL 인코딩된 바이트(“soft hyphen”‑0xAD)로 실제로는 `-d `이며, 방화벽의 하이픈 필터링/차단의 회피 또는 Unicode→ASCII 변환 우회를 노리는 기법입니다. 
 
 <br>
 디코딩하면 아래와 같습니다.  
@@ -232,6 +229,8 @@ https://www.we.net/php-cgi/php-cgi.exe?
 
 공격자는 이 GET(또는 GET+POST) 요청으로 PHP 런타임 설정을 바꾸고 **POST 본문에 담긴 PHP 코드가 곧바로 실행되게** 만들어 RCE를 달성하려 합니다.
 
+### 실제 공격 흐름
+
 1. 공격자가 `php-cgi.exe? -d ... auto_prepend_file=php://input` 형태로 요청 보냄.
 2. 웹서버가 해당 php-cgi를 CGI로 실행하면서 `-d` 파라미터를 적용(취약한 설정이면).
 3. 공격자는 같은 요청에서 POST 바디에 `<?php system($_GET['cmd']); ?>` 같은 PHP 페이로드를 넣음.
@@ -241,7 +240,7 @@ https://www.we.net/php-cgi/php-cgi.exe?
 ---
 
 
-## 📎 예제 2-3. php-cgi : 파일 업로드/POST(멀티파트)형태로 PHP 코드(웹셸) 전송
+## 📎 예제 2-3. php-cgi : POST(멀티파트) 형태로 PHP 코드(웹셸) 전송
 
 ```
 ,<?php echo md5('999999999'); unlink(__FILE__); ?> 
@@ -282,7 +281,44 @@ https://www.we.net/php-cgi/php-cgi.exe?
 2. **up.cgi가 업로드된 입력(또는 파라미터 값)을 `system()`/`exec()` 같은 쉘 호출에 검증 없이 넣는 경우** → 명령 인젝션 → RCE.
 3. **업로드 후 바로 include/require 하거나 템플릿 엔진에 그대로 넣어 서버에서 해석되게 하는 경우** → 템플릿 인젝션 → RCE.
 4. **서버에 오래된 Bash 취약점 같은 외부 런타임 취약점이 존재**하면 환경변수/페이로드를 통해 원격 실행 가능.
-   
+
+---
+
+```php
+<?php
+ignore_user_abort(true);
+set_time_limit(0);
+unlink(__FILE__);
+$file = '.config2.php';
+$code = '<?php if(md5($_GET["pass"]) == ...
+```
+
+1. `ignore_user_abort(true);`
+
+   * 클라이언트(브라우저)가 연결을 끊어도 스크립트가 계속 실행되도록 설정합니다. (공격자가 연결 끊김으로 실행이 중단되는 것을 방지하려는 목적)
+
+2. `set_time_limit(0);`
+
+   * 스크립트 실행 시간 제한을 제거합니다 (무한 실행 허용). 대용량 작업이나 백그라운드 작업을 수행하려는 의도.
+
+3. `unlink(__FILE__);`
+
+   * 현재 실행 중인 파일(self) 을 삭제합니다. 흔히 **흔적 지우기(로그 및 파일 흔적 제거)** 용도로 사용됩니다.
+
+4. `$file = '.config2.php';`
+
+   * 저장할 파일명(예: 백도어/설정 파일)을 지정합니다.
+
+5. `$code = '<?php if(md5($_GET["pass"]) == ...';`
+
+   * `$code` 변수에 PHP 코드(백도어/인증 체크 등)를 문자열로 만들어 보관하려는 의도입니다. 예컨대 특정 패스워드(md5 비교)를 확인하고 이후 특정 동작(명령 실행, 파일 쓰기 등)을 하도록 하는 백도어 패턴과 유사합니다.
+
+
+### POST로 공격을 보냈다고 했을 때의 유효성
+
+* 코드 내 비교가 `md5($_GET["pass"])`로 되어 있다면 **값은 GET 파라미터에서 읽습니다**. 당신이 POST로만 보냈고 GET 파라미터(쿼리스트링)를 포함하지 않았다면, 그 특정 검사(백도어 인증)는 실패할 가능성이 높습니다.
+* 다만 실제 전체 스크립트가 POST 입력도 처리하거나 `$_REQUEST` 또는 다른 로직으로 POST를 GET과 동일하게 읽도록 작성되어 있다면 성공할 수 있습니다. (여기서는 전체 스크립트를 보지 못했으니 확정 불가)
+* 요약: **GET와 POST의 불일치는 실패 원인이 될 수 있다.** 그러나 다른 코드가 보완되어 있다면 성공할 수도 있음.
 
 ---
 
