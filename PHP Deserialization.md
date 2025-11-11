@@ -18,7 +18,7 @@
 
 ---
 
-# 1) 전체 구조
+### 1) 전체 구조
 
 요청은 URL-쿼리 형태로 보이며, 주요 파라미터는 `_controller` 와 `value` 입니다.
 `_controller=SymfonyComponentYamlInline::parse` 로 보아 Symfony의 `Yaml\Inline::parse()`를 호출하는 맥락이고, `value=` 에는 `!!php/object:...` 형태의 **PHP 직렬화된(또는 PHP 객체 표기) 데이터**가 들어 있습니다. 이어서 `exceptionOnInvalidType=0`, `objectSupport=1` 등 파싱 옵션도 함께 전달되고 있습니다.
@@ -26,7 +26,7 @@
 
 ---
 
-# 2) `value` 안의 구문(토큰별 상세 분석)
+### 2) `value` 안의 구문(토큰별 상세 분석)
 
 ```
 !!php/object:a:1:{i:1;a:2:{i:0;O:32:"MonologHandlerSyslogUdpHandler":1:{s:9:"*socket" ; O:29:"MonologHandlerBufferHandler":7:{ ... } } i:0;i:0;}}
@@ -68,4 +68,14 @@
    * 직렬화 배열의 다른 인덱스가 있는 것처럼 보이지만 구조가 반복적/중첩적으로 끝나는 형태입니다. 전체적으로는 **여러 중첩 객체와 배열**로 구성된 직렬화된 데이터입니다.
 
 ---
+### **PHP 객체 직렬화 취약성(POP/POI — PHP Object Injection)** 악용
 
+**PHP 직렬화(serialized object)** 포맷 예시 코드는 다음과 같습니다. 
+
+```
+O:10:\"PMA_Config\":1:{s:6:\"source\",s:11:\"/etc/passwd\";}
+```
+
+* `O:10:"PMA_Config":1:{...}`은 클래스 `PMA_Config`(길이 10)의 인스턴스를 직렬화한 표현이며, 내부 속성 `source`에 `"/etc/passwd"`를 넣으려는 시도입니다.
+* 애플리케이션이 외부 입력(POST/쿠키 등)을 그대로 `unserialize()`하면, 마법 메소드(`__wakeup`, `__destruct`, 기타 gadget 메소드를 가진 클래스)가 실행되어 파일 읽기/원격 코드 실행/파일 포함 등으로 이어질 수 있습니다.
+* `PMA_Config`는 phpMyAdmin 관련 클래스 이름으로, 과거 phpMyAdmin의 특정 버전·환경에서 직렬화된 객체로 파일 시스템 접근/불러오기에 이용되던 사례가 존재합니다. 여기서는 `source="/etc/passwd"`로 **로컬 파일 읽기(LFI/LFR)** 를 시도하는 전형적인 페이로드입니다.
