@@ -26,11 +26,9 @@ Struts에서 발생하는 RCE 취약점은 악의적인 사용자가 서버에 �
 
 ## 1) ⏳
 
-공격자는 취약한 Struts 애플리케이션의 입력 필드에 OGNL 표현식을 삽입할 수 있습니다. 예를 들어:
-
-  ```
-  ${(#context['com.opensymphony.xwork2.dispatcher.HttpServletResponse'].getWriter().println('RCE Successful'))}
-  ```
+```
+${(#context['com.opensymphony.xwork2.dispatcher.HttpServletResponse'].getWriter().println('RCE Successful'))}
+```
 
 위와 같은 표현식을 포함한 HTTP 요청을 보내면, 공격자가 지정한 명령(`'RCE Successful'`)이 **서버에서 실행**됩니다.
 * 특정 환경에서는, 공격자는 파일 업로드를 통해 악성 페이로드를 업로드하고 이를 실행시키는 방법을 사용할 수도 있습니다. 예를 들어, **웹 쉘**을 업로드하고 이를 실행하는 방식입니다.
