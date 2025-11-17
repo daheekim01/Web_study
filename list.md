@@ -33,7 +33,7 @@ X-Content-Type-Options: nosniff
 
 > “브라우저야, 응답의 `Content-Type`을 네 멋대로 추측(snoop/sniff)하지 말고, 서버가 지정한 MIME 타입 그대로만 처리해.”
 
--
+--
 ### 🧠 브라우저는 기본적으로 **MIME Sniffing**을 함
 
 브라우저들은 “서버가 Content-Type을 잘못 보낼 수도 있다”고 생각해서,
