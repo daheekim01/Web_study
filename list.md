@@ -320,3 +320,56 @@ Referrer: https://mybank.com
 민감한 path / querystring 모두 숨겨짐.
 
 ---
+
+## 🪟 X-Frame-Options
+
+`X-Frame-Options`는 웹 페이지가 **iframe, frame, embed** 같은 HTML 프레임 안에 로드되는 것을 제어하는 보안 헤더입니다.
+
+<br>
+
+### 🎯 왜 필요한가? 
+
+X-Frame-Options 헤더의 가장 중요한 목적은: ✅ **Clickjacking(클릭재킹) 공격 차단**
+
+
+#### 🧨 Clickjacking?
+
+1. 자신의 악성 사이트에 iframe으로 **합법적인 사이트**를 불러옴
+2. 이를 투명하게 만들고
+3. 그 위에 “이벤트 유도 버튼”을 만들어놓음
+4. 사용자는 공격자 사이트에서 클릭했다고 생각함 → 실제로는 iframe 내부의 버튼(예: 결제/계정 변경 등)을 클릭
+
+즉, **사용자가 의도하지 않은 행동을 하게 만드는 UI Redressing 공격**.
+
+<br>
+
+### 🛡️ X-Frame-Options로 막는 방법
+
+```http
+X-Frame-Options: DENY
+X-Frame-Options: SAMEORIGIN
+```
+
+* ✔ DENY : **어떤 페이지든 iframe 안에 절대 로드 불가**
+* ✔ SAMEORIGIN : 같은 도메인(origin)에서만 iframe 허용.
+ * `example.com`이 `example.com`을 iframe으로 로드 → 허용
+ * 다른 사이트가 iframe으로 로드 → 차단
+
+<br>
+
+### 📌 참고 : X-Frame-Options는 **과거의 레거시 보호장치**이며, 현대의 표준은 CSP의 `frame-ancestors` 지시어이다.
+
+CSP 방식의 장점:
+
+* 더 세밀한 제어 가능
+* 더 많은 브라우저가 완벽 지원
+* iframe 외 embed/object까지 제어 가능
+
+```http
+X-Frame-Options: DENY
+Content-Security-Policy: frame-ancestors 'none';
+```
+아직도 대부분의 사이트가 호환성 때문에 함께 사용
+
+---
+
