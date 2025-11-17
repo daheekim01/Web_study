@@ -1,13 +1,11 @@
 DNS DNSSEC
-Referrer-Policy
+
 -
-X-Frame-Options
-Strict-Transport-Security
+HTTP Strict-Transport-Security (HSTS)
+-
 Strict-Transport-Security
 -
 Content-Security-Policy
-Content-Security-Policy
--
 -
 Referrer-Policy
 
