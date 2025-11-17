@@ -20,9 +20,9 @@ Referrer-Policy
 Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
 ```
 
-✔ `max-age=<seconds>` : 브라우저가 HTTPS만 사용해야 하는 기간(초 단위).
-✔ `includeSubDomains` : 모든 서브도메인도 HTTPS 강제.
-✔ `preload` : 브라우저 제조사(Chrome, Firefox 등)의 **HSTS preload list**에 등록
+* ✔ `max-age=<seconds>` : 브라우저가 HTTPS만 사용해야 하는 기간(초 단위).
+* ✔ `includeSubDomains` : 모든 서브도메인도 HTTPS 강제.
+* ✔ `preload` : 브라우저 제조사(Chrome, Firefox 등)의 **HSTS preload list**에 등록
 
 <br>
 
