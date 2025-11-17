@@ -15,6 +15,7 @@ controller\=SymfonyComponentYamlInline::parse&value\=!!php/object:a:1:{i:1;a:2:{
 #### 📌 분석
 
 > "Symfony YAML parser에게 PHP 오브젝트를 강제로 언시리얼라이즈시켜 RCE를 유발하는 공격"
+
 > Symfony YAML parser가 외부 입력을 그대로 `Yaml::parse()` 또는 `YamlInline::parse()` 에 넘기는 취약 서비스로,  즉 **YAML 파서에게 PHP 객체 태그를 허용하라는 옵션과, 그 PHP 객체 데이터 자체를 넘기는 시도**입니다.
 
 ```
