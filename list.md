@@ -10,6 +10,67 @@ Content-Security-Policy
 Referrer-Policy
 
 ---
+## 🚧 Strict-Transport-Security (HSTS)
+
+`Strict-Transport-Security`는 **브라우저에게 “이 사이트는 무조건 HTTPS로만 접속해야 한다”**고 강제로 지시하는 **강력한 보안 헤더**예요.
+
+헤더 형식:
+
+```http
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+```
+
+✔ `max-age=<seconds>` : 브라우저가 HTTPS만 사용해야 하는 기간(초 단위).
+✔ `includeSubDomains` : 모든 서브도메인도 HTTPS 강제.
+✔ `preload` : 브라우저 제조사(Chrome, Firefox 등)의 **HSTS preload list**에 등록
+
+<br>
+
+### 🎯 HSTS의 핵심 목적
+
+👉 **HTTP → HTTPS 변환을 브라우저가 자동으로 강제**
+
+한 번 HTTPS로 접속했던 브라우저는
+그 뒤에는 절대 HTTP 요청을 보내지 않고, HTTPS로만 요청하게 됩니다.
+
+<br>
+
+### 🚨 HSTS가 없으면 어떤 공격이 가능해져?
+
+(1) **SSL Strip 공격**
+
+HTTP(평문) 요청에 중간자(MITM)가 끼어들면 
+
+* 브라우저 ←→ 공격자 ←→ 서버
+* 쿠키 가입/로그인 패스워드 등 모두 탈취 가능
+
+<br>
+
+(2) **쿠키 탈취 위험 증가 (Secure flag 무력화 가능)**
+
+HTTPS에는 `Secure` 쿠키를 설정할 수 있지만,
+HTTP 요청 때 중간자 공격자가 브라우저를 속이면 쿠키를 바꿔치기할 수 있음.
+
+HSTS가 있으면 HTTP 자체가 차단되므로 이런 공격 불가능.
+
+<br>
+
+(3) **사용자가 실수로 HTTP로 접속했을 때도 취약**
+
+주소창에 그냥 `example.com` 치면 → HTTP 연결이 기본이기 때문에
+초기 요청이 MITM에 노출될 수 있음.
+
+---
+
+# 🔒 HSTS가 있으면?
+
+* 모든 요청이 **첫 접속 이후 평생(또는 max-age 동안)** HTTPS 강제
+* SSL Strip 방어
+* HTTP downgrade 공격 방지
+* 로그인 사이트의 세션 하이재킹 거의 불가능
+* Secure 쿠키 완전한 보호
+
+---
 ## 🧱 브라우저 보안 헤더 4종 세트
 
 <img width="2205" height="994" alt="image" src="https://github.com/user-attachments/assets/6fd8b154-adc7-420b-b08e-aad611202cb6" />
