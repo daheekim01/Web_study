@@ -33,7 +33,8 @@ X-Content-Type-Options: nosniff
 
 > “브라우저야, 응답의 `Content-Type`을 네 멋대로 추측(snoop/sniff)하지 말고, 서버가 지정한 MIME 타입 그대로만 처리해.”
 
---
+<br>
+
 ### 🧠 브라우저는 기본적으로 **MIME Sniffing**을 함
 
 브라우저들은 “서버가 Content-Type을 잘못 보낼 수도 있다”고 생각해서,
@@ -48,7 +49,8 @@ Content-Type: text/plain
 이지만 내용이 사실 `<script>alert(1)</script>`라면
 → 일부 브라우저는 “이건 자바스크립트 파일이네” 하고 실행해버림 ❗
 
--
+<br>
+
 ### ⚠️ `X-Content-Type-Options` 헤더가 없을 때 생길 수 있는 공격들
 
 ### (1) **Stored / Reflected XSS 확대 (MIME confusion)**
@@ -75,8 +77,8 @@ Content-Type: text/plain
 → “서버가 text/plain이라 했으니 그냥 텍스트로 보여줌”
 → 코드 실행 안 됨 ✅
 
+<br>
 
--
 ### (2) **Cross-Domain Script Inclusion (MIME Type Confusion via JS)**
 
 다른 사이트에서 이런 식으로 스크립트를 불러온다고 가정해봅시다:
@@ -93,8 +95,8 @@ Content-Type: text/plain
 `nosniff` 헤더가 있으면
 → 브라우저가 “MIME이 이미지인데 JS로 쓰려 하네, 실행 안 함.”
 
+<br>
 
--
 ### (3) **Content-Type 오탐 방어 불가능**
 
 개발자들이 실수로 API 응답을 `text/html`로 보내면,
