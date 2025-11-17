@@ -12,6 +12,7 @@ Referrer-Policy
 ---
 ## 🧱 브라우저 보안 헤더 4종 세트
 
+<img width="2205" height="994" alt="image" src="https://github.com/user-attachments/assets/6fd8b154-adc7-420b-b08e-aad611202cb6" />
 
 ```http
 X-Content-Type-Options: nosniff
