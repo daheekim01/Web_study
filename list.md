@@ -64,14 +64,16 @@ HSTS가 있으면 HTTP 자체가 차단되므로 이런 공격 불가능.
 ---
 ## 🧱 브라우저 보안 헤더 4종 세트
 
-<img width="2205" height="994" alt="image" src="https://github.com/user-attachments/assets/6fd8b154-adc7-420b-b08e-aad611202cb6" />
-
 ```http
 X-Content-Type-Options: nosniff
 Content-Type: text/html; charset=UTF-8
 Content-Security-Policy: default-src 'self'
 X-Frame-Options: SAMEORIGIN
 ```
+
+
+<img width="2205" height="994" alt="image" src="https://github.com/user-attachments/assets/6fd8b154-adc7-420b-b08e-aad611202cb6" />
+
 
 ---
 ## 🧩 `X-Content-Type-Options` 헤더
