@@ -12,7 +12,7 @@ Referrer-Policy
 ---
 ## 🚧 Strict-Transport-Security (HSTS)
 
-`Strict-Transport-Security`는 **브라우저에게 “이 사이트는 무조건 HTTPS로만 접속해야 한다”**고 강제로 지시하는 **강력한 보안 헤더**예요.
+`Strict-Transport-Security`는 브라우저에게 “이 사이트는 무조건 HTTPS로만 접속해야 한다”고 강제로 지시하는 **강력한 보안 헤더**예요.
 
 헤더 형식:
 
@@ -60,15 +60,6 @@ HSTS가 있으면 HTTP 자체가 차단되므로 이런 공격 불가능.
 주소창에 그냥 `example.com` 치면 → HTTP 연결이 기본이기 때문에
 초기 요청이 MITM에 노출될 수 있음.
 
----
-
-# 🔒 HSTS가 있으면?
-
-* 모든 요청이 **첫 접속 이후 평생(또는 max-age 동안)** HTTPS 강제
-* SSL Strip 방어
-* HTTP downgrade 공격 방지
-* 로그인 사이트의 세션 하이재킹 거의 불가능
-* Secure 쿠키 완전한 보호
 
 ---
 ## 🧱 브라우저 보안 헤더 4종 세트
