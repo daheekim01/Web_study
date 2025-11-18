@@ -1,15 +1,3 @@
-DNS DNSSEC
-
--
-HTTP Strict-Transport-Security (HSTS)
--
-Strict-Transport-Security
--
-Content-Security-Policy
--
-Referrer-Policy
-
----
 ## 🚧 Strict-Transport-Security (HSTS)
 
 `Strict-Transport-Security`는 브라우저에게 “이 사이트는 무조건 HTTPS로만 접속해야 한다”고 강제로 지시하는 **강력한 보안 헤더**예요.
