@@ -98,6 +98,7 @@ Content-Type: text/plain
 
 (1) **Stored / Reflected XSS 확대 (MIME confusion)**
 
+사용자가 업로드한 파일이나 다운로드할 수 있는 파일을 제공하는 경우,
 만약 공격자가 **파일 업로드나 게시물 첨부 기능**을 악용해
 `text/plain`으로 업로드된 HTML/JS 코드를 올린 뒤,
 그 파일이 `/uploads/file123.txt`로 접근 가능하다면,
@@ -116,9 +117,10 @@ Content-Type: text/plain
    ```
 3. 브라우저가 “이거 HTML/JS 같네?” → 실행 ❌ (XSS 발생)
 
-`X-Content-Type-Options: nosniff`가 있으면
-→ “서버가 text/plain이라 했으니 그냥 텍스트로 보여줌”
-→ 코드 실행 안 됨 ✅
+
+**`X-Content-Type-Options: nosniff`가 있으면**
+* → “서버가 text/plain이라 했으니 그냥 텍스트로 보여줌”
+* → 코드 실행 안 됨 ✅
 
 <br>
 
