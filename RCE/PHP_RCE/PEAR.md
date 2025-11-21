@@ -65,7 +65,7 @@ LFI를 이용해 pearcmd.php 실행을 유발하려는 패턴
 ```
 https://test.com/index.php?lang\=../../../../../../../../usr/local/lib/php/pearcmd&+config-create+/&/<?echo(md5(\"hi\"));?>+/tmp/index1.php
 ```
-
+<br>
 pearcmd는 원래 PHP 패키지 관리용 CLI 파일인데, LFI를 통해 웹에서 호출하면 임의 명령 실행이 가능해집니다.
 
 ```
