@@ -152,10 +152,11 @@ https://example.com/php-cgi/php-cgi.exe?%ADd+allow_url_include%3D1+%ADd+auto_pre
 
 | 파라미터                               | 설명                               |
 | ---------------------------------- | -------------------------------- |
-| `-d allow_url_include=1`           | PHP 설정을 동적으로 바꿔서 외부 URL을 `include`/`require` 허용    |
+| `-d allow_url_include=1`           | 원격 URL을 통한 파일 include 허용 |
 | `-d auto_prepend_file=php://input` | 요청 바디 `php://input`에 포함된 코드를 실행하겠다는 뜻 |
 
-`-d` 옵션은 PHP 실행 시 ini 설정을 커맨드라인에서 덮어쓰는 옵션입니다. CGI 환경에서 취약하게 설정된 경우, 공격자는 **쿼리스트링으로 `-d` 옵션을 전달**해 런타임 ini 값을 변경할 수 있습니다. 
+* `-d` 옵션은 PHP 실행 시 ini 설정을 커맨드라인에서 덮어쓰는 옵션입니다. CGI 환경에서 취약하게 설정된 경우, 공격자는 **쿼리스트링으로 `-d` 옵션을 전달**해 런타임 ini 값을 변경할 수 있습니다. 
+* `auto_prepend_file`은 모든 PHP 스크립트 실행 전에 자동으로 포함되는 파일을 지정하는 설정으로, 공격자들은 HTTP 요청의 raw body 내용을 그대로 읽는 PHP 스트림인 `php://input`을 사용할 수 있습니다. 
 
 ### 실제 공격 흐름
 
